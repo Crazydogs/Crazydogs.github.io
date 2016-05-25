@@ -194,4 +194,22 @@ nginx 一个常见的需求是把它设置成一个代理服务。代理服务�
 
 ### 配置 FastCGI 代理
 
+nginx 也可以用作指向 FastCGI 的路由。FastCGI 可以在各种框架和语言的基础上运行。
 
+最基础的 nginx 使用 FastCGI 的配置包括，使用 fastcgi_pass 指令代替 proxy_pass 指令，使用 fastcgi_param 指令设
+置 FastCGI 参数。假设 FastCGI 服务架设在 localhost:9000。我们以上一节的配置作为基础，用 fastcig_param 指令替换
+proxy_pass 指令，并把参数改为 localhost:9000。在 PHP 中，SCRIPT_FILENAME 参数是用来声明脚本名称的，QUERY_STRING
+参数是用来传递请求参数的。最后配置如下
+
+    server {
+        location / {
+            fastcgi_pass    localhost:9000;
+            fastcgi_param   SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            fastcgi_param   QUERY_STRING    $query_string;
+        }
+        location ~ \.(gif|jpg|png)$ {
+            root /data/images;
+        }
+    }
+
+配置的效果是，将所有除了图片以外的请求通过 FastCGI 协议转到 localhost:9000
