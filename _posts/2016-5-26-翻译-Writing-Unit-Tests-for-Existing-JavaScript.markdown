@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "翻译《Writing Unit Tests for Existing JavaScript》"
-date:   2016-5-16 00:00:10
+date:   2016-5-26 00:00:10
 categories: jekyll update
 ---
 
