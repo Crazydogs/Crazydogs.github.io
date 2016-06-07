@@ -222,53 +222,54 @@ define([
 
 最后 MediaViewer 的测试会像是这样
 
-define([
-    // This properly sets up Squire and mocks window and jQuery
-    // if necessary (for running tests from the command line).
-    'test/unit/injector',
-    
-    // This is a function that mocks the ENV module.
-    'test/unit/mocks/ENV',
-    
-    // This is a function that mocks a component.
-    'test/unit/mocks/component'
-], function (injector, ENVMock, component) {
-    injector = injector();
-  
-    // This will become the constructor for the model under test.
-    var MediaViewer;
-  
-    // Create an object that can serve as a model's component.
-    var c = component();
-  
-    // We also need to mock the ENV module and make it aware of
-    // the fake component we just created.
-    ENVMock(injector, { component : c });
-  
-    describe('MediaViewer Model', function () {
-        before(function (done) {
-            injector.require([
-                'bv/c2013/model/mediaViewer'
-            ], function (M) {
-                MediaViewer = M;
-                done();
+    define([
+        // This properly sets up Squire and mocks window and jQuery
+        // if necessary (for running tests from the command line).
+        'test/unit/injector',
+        
+        // This is a function that mocks the ENV module.
+        'test/unit/mocks/ENV',
+        
+        // This is a function that mocks a component.
+        'test/unit/mocks/component'
+    ], function (injector, ENVMock, component) {
+        injector = injector();
+      
+        // This will become the constructor for the model under test.
+        var MediaViewer;
+      
+        // Create an object that can serve as a model's component.
+        var c = component();
+      
+        // We also need to mock the ENV module and make it aware of
+        // the fake component we just created.
+        ENVMock(injector, { component : c });
+      
+        describe('MediaViewer Model', function () {
+            before(function (done) {
+                injector.require([
+                    'bv/c2013/model/mediaViewer'
+                ], function (M) {
+                    MediaViewer = M;
+                    done();
+                });
+            });
+      
+            it('should be named', function () {
+                var m = new MediaViewer({
+                    component : c
+                }, {});
+                expect(m.name).to.equal('mediaViewer');
+            });
+      
+            it('should mix in provided options', function () {
+                var m = new MediaViewer({
+                    component : c
+                }, { foo : 'bar' });
+      
+                expect(m.options.foo).to.equal('bar');
             });
         });
-  
-        it('should be named', function () {
-            var m = new MediaViewer({
-                component : c
-            }, {});
-            expect(m.name).to.equal('mediaViewer');
-        });
-  
-        it('should mix in provided options', function () {
-            var m = new MediaViewer({
-                component : c
-            }, { foo : 'bar' });
-  
-            expect(m.options.foo).to.equal('bar');
-        });
     });
-});
 
+未完待续
