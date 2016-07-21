@@ -1,6 +1,6 @@
 <div class="cate-switch">
     {% for cate in site.data.categories.data %}
-    <a class="/{{ cate }}"
-        href="{% if page.categories == cate %}active{% endif %}">{{cate}}</a>
+    <a href="/{{ cate }}"
+        class="{% if page.categories == cate %}active{% endif %}">{{cate}}</a>
     {% endfor %}
 </div>
