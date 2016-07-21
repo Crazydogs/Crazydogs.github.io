@@ -2,6 +2,7 @@
 layout: post
 title:  "Javascript 函数式编程"
 date:   2015-10-27 16:44:10
+category: coding
 ---
 
 最近 ken 抽奖中了本书，有幸读到了这本神作《Javascript 函数式编程》。

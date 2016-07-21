@@ -2,6 +2,7 @@
 layout: post
 title:  "《Haskell 趣学指南》"
 date:   2016-7-18 15:44:10
+categories: coding
 ---
 
 ## 为什么学 Haskell

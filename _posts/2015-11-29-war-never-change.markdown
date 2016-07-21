@@ -2,7 +2,7 @@
 layout: post
 title:  "War Never Change"
 date:   2015-11-29 23:34:16
-categories: jekyll update
+categories: game
 ---
 
 最近微软和索尼斗得凶，佳作层出不穷，预算严重超支。

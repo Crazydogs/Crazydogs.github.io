@@ -2,7 +2,7 @@
 layout: post
 title:  "赞美太阳"
 date:   2016-5-25 10:36:00
-categories: jekyll update
+categories: game
 ---
 
 从预购到现在，中间换工作搬家什么的各种折腾，断断续续花了一个多月也总算把黑魂 3

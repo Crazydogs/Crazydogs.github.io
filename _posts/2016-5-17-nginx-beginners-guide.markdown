@@ -2,7 +2,7 @@
 layout: post
 title:  "《Nginx Beginner's Guides》"
 date:   2016-5-17 14:22:10
-categories: jekyll update
+categories: coding
 ---
 
 [原文地址](http://nginx.org/en/docs/beginners_guide.html)

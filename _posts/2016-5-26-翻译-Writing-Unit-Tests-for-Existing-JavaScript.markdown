@@ -2,7 +2,7 @@
 layout: post
 title:  "翻译《Writing Unit Tests for Existing JavaScript》"
 date:   2016-5-26 00:00:10
-categories: jekyll update
+categories: coding
 ---
 
 [原文地址](https://rmurphey.com/blog/2014/07/13/unit-tests)
