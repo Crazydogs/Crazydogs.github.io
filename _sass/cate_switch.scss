@@ -1,0 +1,11 @@
+.cate-page{
+    display: flex;
+    .a {
+        display: inline-block;
+        line-height: 2em;
+        margin: 0 2em;
+    }
+    .a.actie {
+        background: #1756a9;
+    }
+}
