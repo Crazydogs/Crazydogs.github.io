@@ -1,12 +1,12 @@
 .cate-switch{
     display: flex;
-    justify_content: space-around;
-    .a {
+    justify-content: space-around;
+    a {
         display: inline-block;
         line-height: 2em;
         margin: 0 2em;
     }
-    .a.actie {
+    a.actie {
         background: #1756a9;
     }
 }
