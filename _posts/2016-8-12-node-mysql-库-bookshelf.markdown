@@ -105,7 +105,8 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
 
 1. 查询
     1. fetch/fetchPage/fetchAll
-    ````
+
+````
         // select * from `books` where `ISBN-13` = '9780440180296'
         new Book({'ISBN-13': '9780440180296'})
           .fetch()
@@ -113,30 +114,30 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
             // outputs 'Slaughterhouse Five'
             console.log(model.get('title'));
           });
-    ````
+````
     这三个方法看名字应该就能知道什么意思了，都是返回 Promise 对象，前两个方法
     Promise 的返回为 model 或者 null，而 all 返回的是一个 collection 对象，
     collection 的 models 属性包含多个 model
     2. where
-    ````
+````
     model.where('favorite_color', '<>', 'green').fetch().then(function() { //...
     // or
     model.where('favorite_color', 'red').fetch().then(function() { //...
     // or
     model.where({favorite_color: 'red', shoe_size: 12}).fetch().then(function() { //...
-    ````
+````
     跟 sql 里面的 where 没啥区别，但直接用对象字面量方便了很多。
 2. 新增/修改
     model.save
-    ````
+````
      new Book({name: 'book name', author: 'someone'}).save();   // 新增
      Book.where({name: 'book name'}).save({author: 'another}, {method: 'update'}); 修改
-    ````
+````
 3. 删除
     model.destroy
-    ````
+````
     Book.where({name: 'book name'}).destroy();
-    ````
+````
 
 其实这东西现在还没用顺手，未完待续吧。
 看了别人的文档之后，顿时感觉自己封装的 API 弱爆了，还是要学习一个。
