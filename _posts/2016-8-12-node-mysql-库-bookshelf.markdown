@@ -104,7 +104,8 @@ bookShelf 提供了一个 transaction 方法，可以在事务中进行的操作
 BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起来是非常爽快的。
 
 1. 查询
-    1. fetch/fetchPage/fetchAll
+
+    fetch/fetchPage/fetchAll
 
 ````
         // select * from `books` where `ISBN-13` = '9780440180296'
@@ -119,7 +120,8 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
     这三个方法看名字应该就能知道什么意思了，都是返回 Promise 对象，前两个方法
     Promise 的返回为 model 或者 null，而 all 返回的是一个 collection 对象，
     collection 的 models 属性包含多个 model
-    2. where
+
+    where
 
 ````
     model.where('favorite_color', '<>', 'green').fetch().then(function() { //...
