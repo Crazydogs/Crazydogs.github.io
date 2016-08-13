@@ -103,18 +103,18 @@ bookShelf 提供了一个 transaction 方法，可以在事务中进行的操作
 ## 常用操作
 BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起来是非常爽快的。
 
-1. 查询
+#### 查询
 
     fetch/fetchPage/fetchAll
 
 ````
-        // select * from `books` where `ISBN-13` = '9780440180296'
-        new Book({'ISBN-13': '9780440180296'})
-          .fetch()
-          .then(function(model) {
-            // outputs 'Slaughterhouse Five'
-            console.log(model.get('title'));
-          });
+    // select * from `books` where `ISBN-13` = '9780440180296'
+    new Book({'ISBN-13': '9780440180296'})
+      .fetch()
+      .then(function(model) {
+        // outputs 'Slaughterhouse Five'
+        console.log(model.get('title'));
+      });
 ````
 
     这三个方法看名字应该就能知道什么意思了，都是返回 Promise 对象，前两个方法
@@ -133,7 +133,7 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
 
     跟 sql 里面的 where 没啥区别，但直接用对象字面量方便了很多。
 
-2. 新增/修改
+#### 新增/修改
     model.save
 
 ````
@@ -141,7 +141,7 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
      Book.where({name: 'book name'}).save({author: 'another}, {method: 'update'}); 修改
 ````
 
-3. 删除
+#### 删除
     model.destroy
 
 ````
