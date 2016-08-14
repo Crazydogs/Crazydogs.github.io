@@ -162,5 +162,126 @@ Bookshelf 中的异步操作返回值都是 Promise 对象，提供了一种统�
 Promise 对象的返回是 collection 有的是 model, 而有的操作看名字像异步但其实并不返
 回 Promise，不熟悉的时候还是需要多看看接口文档。
 
+## 简单例子
+比如说我们有两张表，book 和 author，我们假定书和作者是多对一的关系。
+数据库中的内容是这样的
+
+````
+    mysql> select * from books;
+    +----+-----------------------+-----------+
+    | id | name                  | author_id |
+    +----+-----------------------+-----------+
+    |  1 | 百年孤独              |         1 |
+    |  2 | 霍乱时期的爱情        |         1 |
+    |  3 | 东方快车杀人案        |         2 |
+    |  4 | ABC 谋杀案            |         2 |
+    +----+-----------------------+-----------+
+
+    mysql> select * from author;
+    +----+-------------------------+
+    | id | name                    |
+    +----+-------------------------+
+    |  1 | 加西亚·马尔克斯         |
+    |  2 | 阿加莎.克里斯蒂         |
+    +----+-------------------------+
+````
+
+那我们可以通过下面简单的代码来描述这两个 model 的关系
+
+````
+    let knex = require('knex')(dbconfig);
+    let bookshelf = require('bookshelf')(knex);
+
+    let Author = bookshelf.Model.extend({
+        tableName: 'author',
+        book: function () {
+            return this.hasMany(Book);
+        }
+    });
+    let Book = bookshelf.Model.extend({
+        tableName: 'books',
+        author: function () {
+            return this.belongsTo(Author);
+        }
+    });
+````
+
+确定关系之后，关联的数据库查询就会变得非常方便了
+
+````
+    Book.where({id: 2}).fetch({
+        withRelated: 'author'
+    }).then(model => {
+        console.log('book');
+        console.log(model.toJSON());
+        console.log('author');
+        console.log(model.related('author').toJSON());
+    });
+
+
+    // 控制台输出如下：
+    // book
+    // { id: 2,
+    //   name: '霍乱时期的爱情',
+    //   author_id: 1,
+    //   author: { id: 1, name: '加西亚·马尔克斯' } }
+    // author
+    // { id: 1, name: '加西亚·马尔克斯' }
+
+````
+
+那如果假定书和作者之间存在着多对多的关系，也是没有问题的
+我们在数据库中加多一张表
+
+````
+    mysql> select * from books_author;
+    +-----------+---------+
+    | author_id | book_id |
+    +-----------+---------+
+    |         1 |       2 |
+    +-----------+---------+
+````
+
+然后重新定义这两个 model
+
+````
+    let Author = bookshelf.Model.extend({
+        tableName: 'author',
+        book: function () {
+            // 如果命名按照规范的话 belongsToMany 只需要第一个参数就够了
+            return this.belongsToMany(Book, 'books_author', 'author_id', 'book_id');
+        }
+    });
+    let Book = bookshelf.Model.extend({
+        tableName: 'books',
+        author: function () {
+            return this.belongsToMany(Author, 'books_author', 'book_id', 'author_id');
+        }
+    });
+````
+
+使用和之前一样的查询语句的结果差不多，只不过获得的 author 是一个 collection
+
+````
+    // 控制台输出如下：
+    // book
+    // { id: 2,
+    //   name: '霍乱时期的爱情',
+    //   author_id: 1,
+    //   author: 
+    //    [ { id: 1,
+    //        name: '加西亚·马尔克斯',
+    //        _pivot_book_id: 2,
+    //        _pivot_author_id: 1 } ] }
+    // author
+    // [ { id: 1,
+    //     name: '加西亚·马尔克斯',
+    //     _pivot_book_id: 2,
+    //     _pivot_author_id: 1 } ]
+````
+
+
+
+
 其实这东西现在还没用顺手，未完待续吧。
 看了别人的文档之后，顿时感觉自己封装的 API 弱爆了，还是要学习一个。
