@@ -117,11 +117,11 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
       });
 ````
 
-    这三个方法看名字应该就能知道什么意思了，都是返回 Promise 对象，前两个方法
-    Promise 的返回为 model 或者 null，而 all 返回的是一个 collection 对象，
-    collection 的 models 属性包含多个 model
+这三个方法看名字应该就能知道什么意思了，都是返回 Promise 对象，前两个方法
+Promise 的返回为 model 或者 null，而 all 返回的是一个 collection 对象，
+collection 的 models 属性包含多个 model
 
-    where
+where
 
 ````
     model.where('favorite_color', '<>', 'green').fetch().then(function() { //...
@@ -131,10 +131,10 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
     model.where({favorite_color: 'red', shoe_size: 12}).fetch().then(function() { //...
 ````
 
-    跟 sql 里面的 where 没啥区别，但直接用对象字面量方便了很多。
+跟 sql 里面的 where 没啥区别，但直接用对象字面量方便了很多。
 
 #### 新增/修改
-    model.save
+model.save
 
 ````
      new Book({name: 'book name', author: 'someone'}).save();   // 新增
@@ -142,12 +142,25 @@ BookShelf 中所有数据库操作都通过 Promise 封装，熟悉的话用起�
 ````
 
 #### 删除
-    model.destroy
+model.destroy
 
 ````
     Book.where({name: 'book name'}).destroy();
 ````
 
+## 概念
+大概上手之后，来稍微了解一下 Bookshelf 中的概念吧
+### model
+model 其实是对数据库行的一种抽象，定义了库名还有与其他 model 之间的关系。model 提
+供了操作数据库的简单方法，比如 fetch，count，save, where 等, 从而屏蔽了数据库层
+面的具体细节。
+### collection
+collection 是 model 的一个有序集合，通常可以通过 model.fetchAll() 来获得。
+
+## 返回值
+Bookshelf 中的异步操作返回值都是 Promise 对象，提供了一种统一的模式，区别在于有点
+Promise 对象的返回是 collection 有的是 model, 而有的操作看名字像异步但其实并不返
+回 Promise，不熟悉的时候还是需要多看看接口文档。
 
 其实这东西现在还没用顺手，未完待续吧。
 看了别人的文档之后，顿时感觉自己封装的 API 弱爆了，还是要学习一个。
