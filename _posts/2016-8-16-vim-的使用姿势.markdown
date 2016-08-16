@@ -83,4 +83,55 @@ vim 有三种模式，普通(normal)/输入(insert)/可视(visal)，通过 ESC �
     set fdm=indent
 ````
 
+当然如果用来写码的话，这依然还是不够的。IDE 的重要功能之一就是减少我们的输入量，
+也就是传说中的自动补全，联想输入之类的，vim 虽然也有(ctr-n)来自动补全，但是是要求
+先输入过一遍，所以就要请出强大的 map 命令了。map 其实就是配置文件中的宏，可以把
+特定的输入转为其他的输入。
+比如作为一个前端，我的 vimrc 里面有这样的配置
+
+````
+    let mapleader = ";"
+    inoremap <leader>html <html><CR><head></head><CR><body><body><CR></html><esc>ki
+    inoremap <leader>link <link rel="stylesheet" type="text/css" href=""><esc>hi
+````
+
+let mapleader 这一句是设定 map 的启动键，当然这并不是必须的，直接
+
+inoremap ;link <link rel="stylesheet" type="text/css" href=""><esc>hi
+
+也是可以的，当然写成变量更好一些啦。
+下面一句 map 的意思就是当输入 ;html 的时候，转换成后面的输入，其中 <esc> 还切回
+了普通模式，k 移动到 body 标签里面，再用 i 切回 insert 模式。第二句其实也差不多，
+是针对 link 标签的一个 map。而 map 命令中还加了两个参数，就是 inoremap 中的 i 和
+nore，i 表示这个 map 只在 insert 模式生效（当然可以猜到 v 和 n 代表啥了，其实还
+有 c 是命令行模式），nore 表示不进行递归。
+
+递归 map 是什么意思呢，就是说如果我为了输入引号方便，把 " map 到 ""，递归的话，新
+输入的两个双引号就又会变成 4 个，4 个变成 8 个，就没完没了了。vim 默认递归 map，
+所以如果可能出问题的 map 就不要递归了。
+
+当然 map 的用处远远不止这些，比如说我使用了一个 nerdtree 的 vim 插件打开插件很麻
+那可以加一个命令的 map
+
+````
+    noremap to :NERDTreeToggle<CR>
+````
+
+如果我觉得平时默认复制东西在 "0 寄存器容易被 dd 操作覆盖掉，那我可以加个复制用的
+map
+
+````
+    vnoremap <leader>y "ay
+````
+
+文件类型判断也可以
+
+````
+    noremap <F5> <ESC>:set filetype=html<ENTER>
+    noremap <F6> <ESC>:set filetype=css<ENTER>
+    noremap <F7> <ESC>:set filetype=javascript<ENTER>
+````
+
+总之就是写码的时候有任何要手打的不爽的东西就全丢进去就好了。
+
 未完待续，施工中。。。
