@@ -1,0 +1,43 @@
+---
+layout: post
+title:  "Vue 阅读笔记"
+date:   2016-8-24 16:44:10
+category: coding
+---
+
+最近闲来无事，看一下 vue 的源码，顺便做个笔记
+
+1. setter 与 delete
+封装了 set 与 del 方法，用于添加删除属性
+
+2. 公用函数
+公用函数主要分以下几类
+    -. 类型转换，_toString, toNumber, toArray 等
+    -. 格式转换，如驼峰命名与 - 命名之间的转换
+    -. 性能优化，提供比原生的更好的实现，如 bind, indexOf
+    -. 补充常用功能，如 extend, def(设置描述符属性), looseEqual(对象内容相等判断)，
+    set 数据结构实现
+    -. 环境检查，检测 UA 等信息，再做一些相应的兼容处理
+3. 解析判断，如，isLiteral，检查字符串是否代表字面量，还有对应 Vue 的过滤器，
+指令等的解析，html 模板字符串的解析等。其中定义了名为 Cache 的缓存数据结构，
+用来暂存解析结果。
+
+4. 配置项，定义了 config 变量，保存配置信息，包括各种开关（debug, warning ...）,
+常量，分隔符等
+
+5. transition 相关操作
+
+6. dom 元素相关操作，包括 query 查询，inDoc(检测是否在 document 中)，元素插入，
+移除，替换，提取内容，循环操作(mapNodeRange)等
+
+7. dom 属性相关操作，包括 bind 绑定的属性，class 属性处理相关处理
+
+8. 锚点创建，用于插入和删除节点时的定位，原理是创建注释节点或者空的文本节点
+
+9. ref 相关操作，搜索 ref
+
+10. html 标签识别，component 识别
+
+11. vue 实例的属性重写机制，包括各种 option， el，data 等等。
+
+12. 
