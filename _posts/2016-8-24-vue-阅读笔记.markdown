@@ -5,7 +5,7 @@ date:   2016-8-24 16:44:10
 category: coding
 ---
 
-最近闲来无事，看一下 vue 的源码，顺便做个笔记
+看一下 vue 的源码，顺便做个笔记
 
 1. setter 与 delete
 封装了 set 与 del 方法，用于添加删除属性
@@ -27,17 +27,42 @@ category: coding
 
 5. transition 相关操作
 
-6. dom 元素相关操作，包括 query 查询，inDoc(检测是否在 document 中)，元素插入，
-移除，替换，提取内容，循环操作(mapNodeRange)等
+6. dom 元素相关操作
+    -. query 查询，inDoc(检测是否在 document 中)
+    -. 元素插入，移除，替换，提取内容，循环操作(mapNodeRange)等
+    -. 属性相关操作，v-bind 属性检测
+    -. class 相关操作，补充 addClass 之类的函数
 
-7. dom 属性相关操作，包括 bind 绑定的属性，class 属性处理相关处理
+7. 锚点创建，用于插入和删除节点时的定位，原理是创建注释节点或者空的文本节点
 
-8. 锚点创建，用于插入和删除节点时的定位，原理是创建注释节点或者空的文本节点
+8. ref 相关操作，搜索 ref
 
-9. ref 相关操作，搜索 ref
+9. html 标签识别，component 识别
 
-10. html 标签识别，component 识别
+10. vue 实例的属性重写机制
+    -. 各种 option， el，data 等的重写机制。
+    -. Vue 对象参数 merge 方法
 
-11. vue 实例的属性重写机制，包括各种 option， el，data 等等。
+11. 变更监控
+    -. Dep 对象，用于记录依赖，对象变更的时候更新所有依赖于变更对象的数据。
+    -. 数组变异方法，如 push, pop, shift 之类的检测，增加 $set, $remove 方法
+    -. 提供不触发监听检测的方法
+    -. Observer 对象，用于监听变更。会在须要监听的目标上绑定一个 __ob__ 属性指向
+    Observer。Observer 提供 walk 方法为对象每个属性设置 getter 和 setter，
+    这样就可以在属性被访问/修改的时候触发事件，Observer 还提供 observeArray 实现对数组的监控。
+    -. Observer 对象提供添加和移除 owner vm 的方法，用于触发相应的变化监控
+    -. observe 方法, defineReactive 方法用于给对象属性增加监控器
 
-12. 
+12. util 对象
+
+13. Vue 初始化方法 initMixin
+    -. 将 options 写入实例属性，设定唯一 uid
+    -. 绑定事件
+    -. fragment 存储
+    -. context, scope, frag 的设定，确定组件的层级关系
+
+14. 表达式编译状态机，提供编译过程中各种状态
+
+15. parse 函数，用于将字符串编译成片段数组，而且提供了缓存机制
+
+16
