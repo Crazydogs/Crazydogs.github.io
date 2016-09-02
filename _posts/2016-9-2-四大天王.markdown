@@ -1,0 +1,20 @@
+---
+layout: post
+title:  "四大天王"
+date:   2016-9-2 9:40:00
+category: painting
+---
+
+终于完成了四大天王
+
+### 2016-8-8
+![沼跃鱼](https://github.com/Crazydogs/painting/blob/master/2016-8-8-%E6%B2%BC%E8%B7%83%E9%B1%BC.PNG?raw=true)
+
+### 2016-8-20
+![可达鸭](https://github.com/Crazydogs/painting/blob/master/2016-8-20-%E5%8F%AF%E8%BE%BE%E9%B8%AD.png?raw=true)
+
+### 2016-8-20
+![鲤鱼王](https://github.com/Crazydogs/painting/blob/master/2016-8-20-%E9%B2%A4%E9%B1%BC%E7%8E%8B.png?raw=true)
+
+### 2016-9-2
+![呆呆兽](https://github.com/Crazydogs/painting/blob/master/2016-9-2-%E5%91%86%E5%91%86%E5%85%BD.png?raw=true)
