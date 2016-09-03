@@ -65,4 +65,19 @@ category: coding
 
 15. parse 函数，用于将字符串编译成片段数组，而且提供了缓存机制
 
+16. expression 对象，如果不是简单的变量，赋予生成 getter 和 setter 的能力
+
+17. Watcher 对象，负责触发 watcher 函数。
+
+18. 模板解析，将字符或节点串转成 DocumentFragment
+    -. Fragment 对象，拥有自己的 scop，有控制自己子节点的方法，联系 vue 实例的方法
+
+19. 内置命令 v-for
+    -. 参数列表
+    -. bind 方法
+    -. diff 方法，用于减少列表更新时的重绘。
+    -. create 方法
+    -. updateRef 方法
+    -. updateModel 方法
+    -. 针对 fragemnt 的创建、删除、移动、缓存等操作
 未完待续
