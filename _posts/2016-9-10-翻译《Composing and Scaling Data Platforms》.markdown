@@ -24,7 +24,7 @@ category: coding
 本文的主旨是说明一些流行的技术的原理，还有他们这样选择的原因。我们会从一些基础的组成部分开始讲起，
 方便我们后面能把他们组合成更大规模的东西。
 
-[!图片1](#)
+![图片1](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_1.png)
 
 本质上来说，当我们处理数据的时候，我们实际上实在安排位置，相对与 CPU，相对于其他数据的位置。
 连续得访问数据是很重要的，CPU 擅长连续数据的操作，因为这是些可预测的。(这一段感觉翻得好奇怪)
@@ -33,7 +33,7 @@ category: coding
 不同级别的 CPU 缓存中。这对性能会有很大的影响。但预读机制对随机寻址没有什么帮助，
 无论是在内存磁盘还是网络请求。事实上，预读还妨碍了随机寻址的，各种缓存以及前端总线里填满了并不会被用到的数据
 
-[!图片2](#)
+![图片2](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_2.png)
 
 通常我们认为硬盘的读取速度是很低的，主内存相对来说就快多了，但事实并非完全如此。
 对主内存来说随机寻址和顺序读写之间有着一两个数量级的性能差距。特别是当使用帮你管理内存的编程语言时，
@@ -43,7 +43,7 @@ category: coding
 硬盘并不总是像我们想的那样非常缓慢。SSD 硬盘展示了另一种思路，特别是使用了 PCle 技术。
 但无论如何，缓存机制对这两种存取方式还是有很大影响。
 
-[!图片3](#)
+![图片3](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_3.png)
 
 现在让我们先来做一个思维试验，建立一个简单的数据库。我们从最简单的，一个文件开始。
 
@@ -52,7 +52,7 @@ category: coding
 过滤、聚合甚至更复杂的操作都可以做到，exciting!
 
 
-[!图片4](#)
+![图片4](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_4.png)
 
 那数据更新操作又如何呢？
 
@@ -65,7 +65,7 @@ category: coding
 所以这里我们遇到了第一次选择，是添加修改到日志文件，保持顺序读取，还是说原址更新，
 但忍受 300/s 的写速度（假设我们直接进行底层操作）。
 
-[!图片5](#)
+![图片5](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_5.png)
 
 在实际操作中，扫描整个文件来进行读操作是效率很低的。可能我们只是要读几个 GB 的数据，
 即使最快的硬盘也要花几秒钟。数据库的初始表扫描也是这样做的。
@@ -73,7 +73,7 @@ category: coding
 但我们平时须要的，通常是一些特定的东西，比如说我们想找客户"bob"。这时候扫描整个文件，
 就有点太过了，我们需要建立索引。
 
-[!图片6](#)
+![图片6](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_6.png)
 
 索引也有很多不同的类型供我们选择。最简单的，就是建立一个拥有定宽值的有序数组，
 在这个例子中，是客户名，带着对应的数据在文件中的偏移量。有序数组可以用二分法来搜索，
@@ -83,7 +83,7 @@ category: coding
 可以很快就找到他们。这么做的问题是，当我们有数据流入的时候，就无法使用连续的方式写了。
 我们只在文件末尾添加内容的写优化就失效了，须要对这种散乱的文件系统做新的增强。
 
-[!图片7](#)
+![图片7](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_7.png)
 
 任何在数据表里面设置了大量索引的人对这个问题都不会陌生。如果我们使用一个转转的磁盘驱动器，
 为了保证整个索引的完整性，转速可能会下降 1000 倍。
@@ -91,7 +91,7 @@ category: coding
 幸好这个问题还是有几种解决方案的。我们准备讨论其中三种，代表了三个方向。他们比在实际应用中简化了一些，
 不过我们只关注概念的层面，方便后面理解更复杂的东西。
 
-[!图片8](#)
+![图片8](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_8.png)
 
 我们的第一种方案只是简单地把索引放到主内存中。这样，随机读写的问题就留在 RAM 中，
 堆文件就在硬盘上保持顺序读写。
@@ -105,7 +105,7 @@ category: coding
 
 另一种方案是，我们不再维持单一大索引，而是使用一组较小的索引。
 
-[!图片9](#)
+![图片9](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_9.png)
 
 这个思路也很简单。我们先把写操作暂存到内存里面，攒了一定量之后，比如说攒了几 MB，
 就把这些数据排序，做好索引，写到硬盘里面，作为一个独立的小索引。最后，我们就会得到一组有序、
