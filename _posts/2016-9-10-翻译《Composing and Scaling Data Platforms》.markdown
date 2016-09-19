@@ -124,13 +124,13 @@ category: coding
 
 在实际应用中我们还须要处理偶发的更新操作，不过通过顺序读写就可以解决。
 
-[!图片10](#)
+![图片10](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_10.png)
 
 我们创建一个叫做[Log Structured Merge Tree](http://www.benstopford.com/2015/02/14/log-structured-merge-trees/)
 的东西(LSM-Tree)。很多处理大规模数据的工具使用了这种方法，如 HBase, Cassandra,
 Google 的 BigTable 等等。这种方案很好地平衡了读写性能和内存开销。
 
-[!图片11](#)
+![图片11](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_11.png)
 
 这样我们就通过在内存储存索引或者用写优化的索引结构(比如LSM)来避免低效率的随机写操作。
 当然还有第三种方案，更暴力的方法。
@@ -141,7 +141,7 @@ Google 的 BigTable 等等。这种方案很好地平衡了读写性能和内存
 
 (这列存储方法跟 Big Table 模式同名，但其实是两种不同的东西)
 
-[!图片11](#)
+![图片11](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_11.png)
 
 Column Orientation 的思想也很简单。我们把数据按列分开，每列存在一个文件里，
 而不是像之前那样把很多行数据放到一个文件里。
@@ -155,7 +155,7 @@ Column Orientation 的思想也很简单。我们把数据按列分开，每列�
 相当于每一列都需要单独一次写入。常见的解决方案是使用上面提到的 LSM 类似的方法来批量处理写操作。
 许多采用 Columnar 的数据库还会做一个整体的排序来优化读操作性能。
 
-[!图片12](#)
+![图片12](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_12.png)
 
 通过按列拆分数据，我们减少了需要从硬盘读取的数据量，因为通常我们读的是所有列的一个子集。
 
@@ -167,14 +167,14 @@ Column Orientation 的思想也很简单。我们把数据按列分开，每列�
 这和之前提到的使用堆文件与索引的方法很不一样。要理解这一点，可以问自己一个问题，
 这种柱状方法和『堆文件加索引』这种索引加在每一个字段上的方法区别是啥。
 
-[!图片13](#)
+![图片13](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_13.png)
 
 问题的答案就是索引文件的顺序。像 BTrees 之类的结构，是按照索引的字段排序的，
 拼接两个字段的数据是一个流操作。但如果是堆文件加索引的模式，索引找到第一个字段之后，
 接下来就需要一个随机读的操作了，通常会比拼接两个有相同排序的列效率低。
 我们又一次借助了顺序访问来优化性能。
 
-[!图片14](#)
+![图片14](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_14.png)
 
 这些优秀的技术成为数据平台的基石。我们其中某种作为核心，来解决问题。
 
@@ -198,14 +198,14 @@ Databases》里面提出了这一点。
 所以上面提到的方案，做出了不同的权衡，但都保持了简单的原理和很好的硬件兼容，
 也就是说很容易扩展。
 
-[!图片15](#)
+![图片15](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_15.png)
 
 我们已经讲过了一些存储引擎的核心方法。虽然实际应用中会复杂很多，我们做了一些简化，
 但弄清概念还是很有用的。
 
 扩展一个数据平台不只是考虑存储引擎，还要考虑并行的因素。
 
-[!图片16](#)
+![图片16](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_16.png)
 
 当我们讨论多个机器上的数据时，我们主要要面对两个问题，分区和复制。分区有时候也称为分片，
 在随机读写和高负载的情况下都能表现得不错。
@@ -217,14 +217,14 @@ Databases》里面提出了这一点。
 这种方式有着极好的可扩展性，这是唯一在客户端请求增长的时候能有线性扩展性的方式。
 请求被隔离在一个独立的机器上，每个请求只由集群中的一个机器进行处理。
 
-[!图片17](#)
+![图片17](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_17.png)
 
 我们也可以通过分区来提供批处理服务，比如聚合函数或者更复杂的算法聚类、机器学习什么的。
 关键点在于我们使用广播的方式让所有机器同时运行。这让我们能在更短的时间内完成一个高计算量的问题。
 
 批处理服务面对大型问题的时候表现得很好，但是并发性很差，因为它执行的时候会耗尽集群上的所有资源.
 
-[!图片18](#)
+![图片18](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_18.png)
 
 所以现在我们有两种极端策略，一种是直接访问一个机器，另一种是广播。我们须要小心的是，
 位于两者中间的策略。比如在很多跨机器的 NoSQL 存储中使用的辅助索引机制。
@@ -236,14 +236,14 @@ Databases》里面提出了这一点。
 也有很多其他数据库，如 MongoDB, Cassandra, Riak 使用了辅助索引。辅助索引虽然有效，
 但重要的是理解它对系统并发性的影响。
 
-[!图片19](#)
+![图片19](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_19.png)
 
 造成性能瓶颈的原因是备库。你可能很熟悉使用异步保存的数据库或非关系型数据库的备库了。
 
 实际应用中，备库可能是透明的（只用来做恢复），只读的（并发读），或者是可读可写的
 （增加容忍分区）。你须要根据系统的一致性要求进行选择权衡。这是 CAP 定理决定的。
 
-[!图片20](#)
+![图片20](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_20.png)
 
 关于一致性*的权衡背后是一个重要的问题，数据的一致性，在什么时候是最重要的。
 
@@ -255,7 +255,7 @@ Databases》里面提出了这一点。
 (* 注意，一致性这个词通常有两种用法，分别是 ACID 中的 C 和 CAP 中的 C。这两者是不同的，
 我这里使用的是 CAP 的定义：所有节点在同一时间访问统一份最新的数据)
 
-[!图片21](#)
+![图片21](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_21.png)
 
 解决一致性问题的方案很简单，就是避免它的出现。如果真的无法避免，也要把它隔离在尽可能少的机器上。
 
@@ -268,7 +268,7 @@ web 日志，他们并没有一致性的要求，因为他们并不会发生变�
 我们就能避免这种易变的状态。比如说我们要把一个交易标记为有诈骗嫌疑的。那我们可以直接加一个新字段，
 然后更新它，或者我们可以简单地记录一个操作流，链接到原始交易。
 
-[!图片22](#)
+![图片22](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_22.png)
 
 因此在一个数据平台中，要么完全避免一致性的需求，要么将它隔离到一个笑得范围内。
 一种隔离方法是只使用一个写服务，另一种是物理隔离，区分出可变世界和不可变世界。
@@ -278,7 +278,7 @@ web 日志，他们并没有一致性的要求，因为他们并不会发生变�
 
 现在，我们有了这些须要进行取舍权衡的要素，要如何把他们放到一起，组建一个数据平台。
 
-[!图片23](#)
+![图片23](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_23.png)
 
 一个典型的应用架构看起来可能像下面这个一样。我们有一些操作，会写数据到数据库，
 然后再把数据读出来。对很多的简单工作，这样就够了。很多成功的应用采用了这种模式。
@@ -289,7 +289,7 @@ web 日志，他们并没有一致性的要求，因为他们并不会发生变�
 让我们扩展 ACID 的世界。默认的使用方式是很安全的，但当我们面对更大的规模的时候，
 它的性能有可能会因为我们过度的需求而受到移植。
 
-[!图片24](#)
+![图片24](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_24.png)
 
 一个简单的方案是 CQRS (命令查询职责分离)。
 
@@ -297,7 +297,7 @@ web 日志，他们并没有一致性的要求，因为他们并不会发生变�
 同时读操作也有相应的优化，像 Goldengate 这样的工具，或者是 MongoDB
 中的 Replica Sets 都是用来解决这个的。
 
-[!图片25](#)
+![图片25](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_25.png)
 
 许多数据库在底层做了类似的优化。比如说 Druid。Druid 是一个开源、分布式、事件序列、
 柱状的分析引擎。柱状存储在处理大块的输入时性能最好，数据被存储到多个文件中。
@@ -309,7 +309,7 @@ Durid 利用在每条记录上的时间标记来确定操作顺序。
 
 这样的组合提供了类似 CQRS 一样的效果，但又只暴露一个抽象的数据库接口。
 
-[!图片26](#)
+![图片26](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_26.png)
 
 另一种方法是使用 Operational/Analytic Bridge。读写视图通过事件流来分隔。状态流会被永久保存，
 所以异步请求可以通过重组和回放来响应。
@@ -320,7 +320,7 @@ Durid 利用在每条记录上的时间标记来确定操作顺序。
 
 这种模式很适合中型规模的开发，拥有至少一个可变视图的需求。
 
-[!图片27](#)
+![图片27](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_27.png)
 
 如果我们能将系统设计成一个不可变的世界，那它就能在大数据和复杂分析下表现得更好。
 使用 Hadoop 对咱的批处理管道就是一种典型的应用。
@@ -335,7 +335,7 @@ Hadoop 的优势在于它非常齐全的工具集，无论你想要快速读写�
 这种架构非常适合不可变数据，大容量的读取和处理。但想一想 100 TBS 以上的数据，
 这种结构就会变动很缓慢了，通常要花几小时的时间才能完成处理。
 
-[!图片28](#)
+![图片28](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_28.png)
 
 批处理管道的问题在于，我们通常不想等一两个小时来获取数据。常用的解决方案是，
 在旁边再加个 streaming 层。这种方案也被称作 Lambda Architecture。
@@ -355,7 +355,7 @@ Lambda Architecture 关注的一点是，我们通常希望很快得到一个近
 
 这种模式适合大容量的，如 100TB+ 的数据平台，结合了流和丰富的批处理解析函数。
 
-[!图片29](#)
+![图片29](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_29.png)
 
 还有另一种方法来解决批处理管道缓慢的问题。这种方式有时候被称为 Kappa 结构。
 其实我觉得这个名字有点不符。所以我会用另一个术语『流数据平台』(原文为 Stream Data Platform)，
@@ -371,7 +371,7 @@ Lambda Architecture 关注的一点是，我们通常希望很快得到一个近
 天下没有免费的午餐，对于困难的问题，流数据平台相比等价的批处理系统可能会慢一些，
 但从『储存然后处理』到『处理流数据』的转变让我们有更大的机会更快得到结果。
 
-[!图片30](#)
+![图片30](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_30.png)
 
 最后，流处理平台可能会遇到应用集成的问题。这是一个棘手的问题，像 Infomatica Tibco
 和 Oracle 之类的大厂多年来一直在寻求解决方案。虽然有很多优化，但都没有达到质变的水平。
@@ -380,7 +380,7 @@ Lambda Architecture 关注的一点是，我们通常希望很快得到一个近
 流数据平台提供了一种有趣的可能的解决方案。通过使用 O/A 桥，获得异步存储格式和新建视图的能力，
 同时隔离了一致性的要求。
 
-[!图片31](#)
+![图片31](http://crazydogs.github.io/images/Composing_and_Scaling_Data_platforms_31.png)
 
 伴随着这些拥有不变性的日志记录系统，像 Kafka 这样的产品才能够有足够的空间做核心历史纪录。
 这意味着数据恢复可以通过回放和再生完成，而不是备份一个一个的检查点。
