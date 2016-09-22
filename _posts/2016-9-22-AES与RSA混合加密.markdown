@@ -1,0 +1,107 @@
+---
+layout: post
+title:  "AES 与 RSA 混合加密"
+date:   2016-9-22 16:44:10
+category: coding
+---
+
+最近工作需要又在折腾 PHP，碰到用户信息上传的需求，自然是不能明文上的。
+所以整了一个加密方案，大概像这样。
+
+![流程](http://crazydogs.github.io/images/AES与RSA混合加密_1.png)
+
+前端直接用简单的对称加密方式肯定是在骗自己，再怎么混淆别人有心也是能破解的。
+但都用 RSA 的话，那真是不知道要用多少位的 key 来做了，而且运算量也太大了，
+多少会影响性能。
+
+总体来说就是利用 RSA 的不对称性来确保前端加密的安全，用 AES 来进行主要的数据编码，
+保证运行的效率。
+
+### 前端
+
+实现的时候 AES 选用的加密库是 [crypto-js](https://code.google.com/archive/p/crypto-js/)，
+支持许多种加密方式，可以安旭选择。
+
+不过选库的时候踩了一个坑，github 上搜 crypto js 的时候，第一名那个项目其实是把 crypto-js
+包了一层，简化了一下 API。单纯在 js 里使用的时候没什么问题，但后面在 PHP 那边解码的时候，
+总是会出现乱码，到现在都没找到原因，后来换成上面那个链接的包才可以。
+
+首先引用压缩包中两个文件
+
+````
+   <script src="/rollups/aes.js"></script>
+   <script src="/components/pad-nopadding-min.js"></script>
+````
+
+其实第二个文件只是一小段位数补齐代码而已，直接合起来好一些。接下来就可以进行 AES 加密了
+
+{% highlight javascript %}
+    function createRandomStr(lenght) {
+        var str = '';
+        while (lenght-- > 0) {
+            var num = Math.floor(Math.random() * 26);
+            str += String.fromCharCode(num + 97);
+        }
+        console.log('random string');
+        console.log(str);
+        return str;
+    }
+    function aesEncrypt(dataStr) {
+        var randomStr = createRandomStr(16);
+        aesKey = CryptoJS.enc.Latin1.parse(randomStr);
+        var result = CryptoJS.AES.encrypt(dataStr, aesKey, {
+            iv: aesKey,
+            mode: CryptoJS.mode.CBC,
+            padding: CryptoJS.pad.ZeroPadding
+        });
+        return {
+            // 加密猴得到的 result 是一个对象，须要调用 toString 再交给后端
+            data: result.toString(),
+            key: randomStr
+        };
+    }
+{% endhighlight %}
+
+RSA 加密使用的是 [JSEncrypt](https://github.com/travist/jsencrypt)，同样是先引用
+
+````
+    <script src="/jsencrypt.min.js"></script>
+````
+
+加密过程也很简单
+
+{% highlight javascript %}
+    var encrypt = new JSEncrypt();
+    var publicKey = '-----BEGIN PUBLIC KEY----- ...';
+    function rsaEncrypt() {
+        encrypt.setPublicKey(publicKey);
+        return encrypt.encrypt();
+    }
+{% endhighlight %}
+
+接下来就是把两个加密方式连起来。
+
+{% highlight javascript %}
+    funciton encryptData(data) {
+        var dataStr = JSON.stringify(data);
+        var aesResult = aesEncrypt(dataStr);
+        return {
+            key: rsaEncrypt(aesResult.key),
+            data: aesResult.data
+        };
+    }
+{% endhighlight %}
+
+然后把数据提交到后端接口就可以了
+
+### 后端
+
+后端使用的是 PHP，须要安装一个扩展 mcrypt，具体可以看一下文章末尾的参考链接。
+
+
+### 参考
+- [如何使用CryptoJS的AES方法进行加密和解密](http://jser.io/2014/08/19/how-to-use-aes-in-crypto-js-to-encrypt-and-decrypt)
+- [使用 RSA 和 AES 加密传输数据 js 到 php(前端非对称加密)](http://gold.xitu.io/entry/56f1f37e731956005d494952)
+- [PHP安装扩展mcrypt以及相关依赖项 【PHP安装PECL扩展的方法】](http://blog.csdn.net/21aspnet/article/details/8203447)
+
+
