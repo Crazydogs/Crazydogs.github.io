@@ -97,7 +97,45 @@ RSA 加密使用的是 [JSEncrypt](https://github.com/travist/jsencrypt)，同�
 ### 后端
 
 后端使用的是 PHP，须要安装一个扩展 mcrypt，具体可以看一下文章末尾的参考链接。
+还需要 openssl 的支持，剩下的就很简单了
 
+写个 RSA 加解密的类
+
+{% highlight php %}
+    class Rsa_tool {
+        private static $PRIVATE_KEY = 'xxxxxx';
+        private static $PUBLIC_KEY = 'xxxxxx';
+
+        public static function rsaEncrypt($originalData) {
+            $pu_key = openssl_pkey_get_public(self::$PUBLIC_KEY);
+            $encrypted = '';
+            openssl_public_encrypt($originalData, $encrypted, $pu_key);
+            $encrypted = base64_encode($encrypted);
+            return $encrypted;
+        }
+
+        public static function rsaDecrypt($encryptedData) {
+            $pi_key = openssl_pkey_get_private(self::$PRIVATE_KEY);
+            $decrypted = '';
+            openssl_private_decrypt(base64_decode($encryptedData), $decrypted, $pi_key);
+            return $decrypted;
+        }
+    }
+{% endhighlight %}
+
+再加上 AES 解密，就完成了
+
+{% highlight php %}
+    $key = $_POST['key'];
+    $data = $_POST['data'];
+    
+    $key = Ras_tool::rsaDecrypt($key);
+    $data = base64_decode($data);
+    // 注意模式须要和加密的时候一样
+    $data = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, MCRYPT_MODE_CBC, $key);
+
+    var_dump($data);
+{% endhighlight %}
 
 ### 参考
 - [如何使用CryptoJS的AES方法进行加密和解密](http://jser.io/2014/08/19/how-to-use-aes-in-crypto-js-to-encrypt-and-decrypt)
