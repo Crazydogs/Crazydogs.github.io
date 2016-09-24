@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "四大天王"
+title:  "画个机枪兵"
 date:   2016-9-24 8:11:00
 category: painting
 ---
