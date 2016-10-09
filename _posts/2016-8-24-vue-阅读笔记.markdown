@@ -128,20 +128,20 @@ function isReserved(str) {
     - _debounce 防抖函数，防止函数被过于频繁地触发
     - indexOf 在数组中查询对象的索引值
     - cancellable 将一个函数包装成一个可取消的版本，主要用于回调函数
-    {% highlight javascript %}
-    function cancellable(fn) {
-        var cb = function cb() {
-            if (!cb.cancelled) {
-                return fn.apply(this, arguments);
-            }
-        };
-        // 可以通过调用 cancel 方法来静默原函数
-        cb.cancel = function () {
-            cb.cancelled = true;
-        };
-        return cb;
-    }
-    {% endhighlight %}
+        {% highlight javascript %}
+        function cancellable(fn) {
+            var cb = function cb() {
+                if (!cb.cancelled) {
+                    return fn.apply(this, arguments);
+                }
+            };
+            // 可以通过调用 cancel 方法来静默原函数
+            cb.cancel = function () {
+                cb.cancelled = true;
+            };
+            return cb;
+        }
+        {% endhighlight %}
     - looseEqual 检查两个参数是否相等，如果均为对象且 json 编码后相同也视为相等
 
 2. 公用函数
