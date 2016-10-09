@@ -7,8 +7,142 @@ category: coding
 
 看一下 vue 的源码，顺便做个笔记
 
-1. setter 与 delete
-封装了 set 与 del 方法，用于添加删除属性
+- 作为模块加载
+{% highlight javascript %}
+    (function (global, factory) {
+        typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+        typeof define === 'function' && define.amd ? define(factory) :
+        (global.Vue = factory());
+    }(this, function () { 'use strict';
+        ...
+    }));
+{% endhighlight %}
+
+- set 方法
+用于为对象添加属性
+{% highlight javascript %}
+    function set(obj, key, val) {
+        // 如已有该属性，覆盖 [hasOwn](#)
+        if (hasOwn(obj, key)) {
+            obj[key] = val;
+            return;
+        }
+        // 如对象为 vueModel，设置 _data 中的值
+        if (obj._isVue) {
+            set(obj._data, key, val);
+            return;
+        }
+        var ob = obj.__ob__;
+        // 如果不是 vueModel 则简单设置值
+        if (!ob) {
+            obj[key] = val;
+            return;
+        }
+        // 如果是 vueModel 须要额外处理工作
+        // 将属性设置为可响应的 [convert](#)
+        ob.convert(key, val);
+        // 通知依赖该数据的对象 [notify](#)
+        ob.dep.notify();
+        // 如果有上级的 vueModel，更新键值和 watcher
+        if (ob.vms) {
+            var i = ob.vms.length;
+            while (i--) {
+                var vm = ob.vms[i];
+                vm._proxy(key);
+                vm._digest();
+            }
+        }
+        return val;
+    }
+{% endhighlight %}
+
+- del 方法
+为对象删除属性，如果有必要，触发 change 事件
+{% highlight javascript %}
+    function del(obj, key) {
+        // 检查是否已有该属性 [hasOwn](#)
+        if (!hasOwn(obj, key)) {
+            return;
+        }
+        delete obj[key];
+        var ob = obj.__ob__;
+        if (!ob) {
+            if (obj._isVue) {
+                delete obj._data[key];
+                // 更新所有 watcher [_digest](#)
+                obj._digest();
+            }
+            return;
+        }
+        // 通知依赖此属性的对象 [notify](#)
+        ob.dep.notify();
+        // 如果有上级的 vueModel，更新键值和 watcher
+        if (ob.vms) {
+            var i = ob.vms.length;
+            while (i--) {
+                var vm = ob.vms[i];
+                vm._unproxy(key);
+                vm._digest();
+            }
+        }
+    }
+{% endhighlight %}
+
+- 字符串检查
+检查一个字符串是否能被转为字面量
+{% highlight javascript %}
+    // 开头空格+(布尔值|正负数|字符串)结尾空格
+    var literalValueRE = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/;
+
+    function isLiteral(exp) {
+        return literalValueRE.test(exp);
+    }
+{% endhighlight %}
+检查是否为保留字，即是否以 $ 或 _ 开头
+{% highlight javascript %}
+function isReserved(str) {
+    var c = (str + '').charCodeAt(0);
+    return c === 0x24 || c === 0x5F;
+}
+{% endhighlight %}
+
+- 类型转换
+    对特殊情况做了处理
+    - _toString 转为字符串，确保空值输出为空字符串
+    - toNumber 转为数字，无法转为数字时返回原值
+    - toBoolean 转为布尔值，'false' 被认为是假值
+
+- 字符串格式化
+    - stripQuotes 去除字符串首尾引号
+    - camelize 将用 - 拼接的字符串转为驼峰式字符串
+    - hyphenate 将驼峰式的字符串转为用连字符连接
+    - classify 将用 - 或 _ 或 / 连接的字符串转为驼峰式的类名
+
+- 辅助函数
+    - bind 代替原生的 bind 方法
+    - toArray 将类数组对象转为真正的数组
+    - extend 类似于 jQuery 的 extend 不过不提供深层递归功能
+    - isObject 判断是否为对象（排除 null），主要用于判断是否能被 json 编码
+    - isPlainObject 判断是否为简单的对象即 toString 返回 [object Object]
+    - def 为对象设置带描述符的属性
+    - _debounce 防抖函数，防止函数被过于频繁地触发
+    - indexOf 在数组中查询对象的索引值
+    - cancellable 将一个函数包装成一个可取消的版本，主要用于回调函数
+    {% highlight javascript %}
+    function cancellable(fn) {
+        var cb = function cb() {
+            if (!cb.cancelled) {
+                return fn.apply(this, arguments);
+            }
+        };
+        // 可以通过调用 cancel 方法来静默原函数
+        cb.cancel = function () {
+            cb.cancelled = true;
+        };
+        return cb;
+    }
+    {% endhighlight %}
+    - looseEqual 检查两个参数是否相等，如果均为对象且 json 编码后相同也视为相等
 
 2. 公用函数
 公用函数主要分以下几类

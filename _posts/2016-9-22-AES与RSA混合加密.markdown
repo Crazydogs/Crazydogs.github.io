@@ -133,6 +133,8 @@ RSA 加密使用的是 [JSEncrypt](https://github.com/travist/jsencrypt)，同�
     $data = base64_decode($data);
     // 注意模式须要和加密的时候一样
     $data = mcrypt_decrypt(MCRYPT_RIJNDAEL_128, $key, $data, MCRYPT_MODE_CBC, $key);
+    // AES 解密后有可能在字符串末尾留有 \0 补齐尾，不去除的话有可能会 json 解析失败，所以用 trim 过一遍
+    $data = trim($data);
 
     var_dump($data);
 {% endhighlight %}
