@@ -99,12 +99,6 @@ category: coding
     }
 {% endhighlight %}
 检查是否为保留字，即是否以 $ 或 _ 开头
-{% highlight javascript %}
-function isReserved(str) {
-    var c = (str + '').charCodeAt(0);
-    return c === 0x24 || c === 0x5F;
-}
-{% endhighlight %}
 
 - 类型转换
     对特殊情况做了处理
@@ -142,16 +136,185 @@ function isReserved(str) {
             return cb;
         }
         {% endhighlight %}
-    - looseEqual 检查两个参数是否相等，如果均为对象且 json 编码后相同也视为相等
 
-2. 公用函数
-公用函数主要分以下几类
-    -. 类型转换，_toString, toNumber, toArray 等
-    -. 格式转换，如驼峰命名与 - 命名之间的转换
-    -. 性能优化，提供比原生的更好的实现，如 bind, indexOf
-    -. 补充常用功能，如 extend, def(设置描述符属性), looseEqual(对象内容相等判断)，
-    set 数据结构实现
-    -. 环境检查，检测 UA 等信息，再做一些相应的兼容处理
+- 辅助函数
+    - looseEqual 检查两个参数是否相等，如果均为对象且 json 编码后相同也视为相等
+    - hasProto 检查是否有 __proto__ 属性
+    - isBrowser 检查运行环境是否在浏览器中
+    - 浏览器检查
+        - isIE
+        - isIE9
+        - isAndroid
+        - isIos
+        - iosVersion
+    - 浏览器兼容
+        - hasMutationObserverBug 检查 iOS 版本是否高于 9.3
+        - 根据浏览器设置 transition 和 animation 的前缀和事件名
+
+- 辅助函数
+    - nextTick 设置一个异步任务，通过 nextTick(callbackfun, context) 使用
+    {% highlight javascript %}
+    var nextTick = (function () {
+        var callbacks = [];
+        var pending = false;
+        var timerFunc;
+        function nextTickHandler() {
+            pending = false;
+            var copies = callbacks.slice(0);
+            callbacks = [];
+            for (var i = 0; i < copies.length; i++) {
+                copies[i]();
+            }
+        }
+
+        /* istanbul ignore if */
+        if (typeof MutationObserver !== 'undefined' && !hasMutationObserverBug) {
+            // 如果可以使用 MutationObserver 的话使用一个不断改变内容的文字节点来触发异步事件
+            var counter = 1;
+            var observer = new MutationObserver(nextTickHandler);
+            var textNode = document.createTextNode(counter);
+            observer.observe(textNode, {
+                characterData: true
+            });
+            timerFunc = function () {
+                counter = (counter + 1) % 2;
+                textNode.data = counter;
+            };
+        } else {
+            // webpack attempts to inject a shim for setImmediate
+            // if it is used as a global, so we have to work around that to
+            // avoid bundling unnecessary code.
+            // 无法使用 MutationObserver 的时候使用 setTimeout
+            var context = inBrowser ? window : typeof global !== 'undefined' ? global : {};
+            timerFunc = context.setImmediate || setTimeout;
+        }
+        return function (cb, ctx) {
+            var func = ctx ? function () {
+                cb.call(ctx);
+            } : cb;
+            callbacks.push(func);
+            if (pending) return;
+            pending = true;
+            timerFunc(nextTickHandler, 0);
+        };
+    })();
+    {% endhighlight %}
+
+- 数据类型
+    - _Set 如果没有原生的集合 Set，则提供一个实现
+    - Cache 缓存队列 可以通过 limit 设置队列最大长度
+        - put 在队列尾部加入元素，如果队列已满，先调用一次 shift
+        - shift 在队列首部移除元素
+        - get 根据键名，在队列任意位置提取一个元素，并插到队列末尾
+
+- state 解析
+    - pushFilter 将一个 filter 字符串解析成过滤器名和参数，推入数组
+    - processFilterArg 解析 filter 参数
+{% highlight javascript %}
+    function processFilterArg(arg) {
+        if (reservedArgRE.test(arg)) {
+            // 经检查为保留字 /^in$|^-?\d+/, in 或者正负数
+            return {
+                value: toNumber(arg),
+                dynamic: false
+            };
+        } else {
+            // 检查是否被引号包裹
+            var stripped = stripQuotes(arg);
+            var dynamic = stripped === arg;
+            // 如果被引号包裹则认为是字符串，否则为变量
+            return {
+                value: dynamic ? arg : stripped,
+                dynamic: dynamic
+            };
+        }
+    }
+{% endhighlight %}
+- state 解析
+    - parseDirective 解析指令
+{% highlight javascript %}
+    // 解析形如 "a + 1 | uppercase" 这样的字符串
+    // 返回一个对象 
+    // {
+    //     expression: 'a + 1',
+    //     filters: [{name: 'uppercase', args: null}]
+    // }
+    function parseDirective(s) {
+        // 检查是否解析过
+        var hit = cache$1.get(s);
+        if (hit) {
+            // 如已经解析过，直接使用缓存队列中的结果
+            return hit;
+        }
+
+        // reset parser state
+        str = s;
+        inSingle = inDouble = false;
+        curly = square = paren = 0;
+        lastFilterIndex = 0;
+        dir = {};
+
+        for (i = 0, l = str.length; i < l; i++) {
+            // 前一个字符
+            prev = c;
+            // 当前字符
+            c = str.charCodeAt(i);
+            if (inSingle) {
+                // check single quote
+                // 0x27 '  0x5C \
+                if (c === 0x27 && prev !== 0x5C) inSingle = !inSingle;
+            } else if (inDouble) {
+                // check double quote
+                // 0x27 "  0x5C \
+                if (c === 0x22 && prev !== 0x5C) inDouble = !inDouble;
+            } else if (c === 0x7C && // pipe
+                // 0x7C |
+                    str.charCodeAt(i + 1) !== 0x7C && str.charCodeAt(i - 1) !== 0x7C) {
+                if (dir.expression == null) {
+                    // first filter, end of expression
+                    lastFilterIndex = i + 1;
+                    // 分离出表达式部分
+                    dir.expression = str.slice(0, i).trim();
+                } else {
+                    // already has filter
+                    // 解析处理 filter 部分
+                    pushFilter();
+                }
+            } else {
+                switch (c) {
+                    case 0x22:
+                        inDouble = true;break; // "
+                    case 0x27:
+                        inSingle = true;break; // '
+                    case 0x28:
+                        paren++;break; // (
+                    case 0x29:
+                        paren--;break; // )
+                    case 0x5B:
+                        square++;break; // [
+                    case 0x5D:
+                        square--;break; // ]
+                    case 0x7B:
+                        curly++;break; // {
+                    case 0x7D:
+                        curly--;break; // }
+                }
+            }
+        }
+
+        // 收尾
+        if (dir.expression == null) {
+            dir.expression = str.slice(0, i).trim();
+        } else if (lastFilterIndex !== 0) {
+            pushFilter();
+        }
+
+        cache$1.put(s, dir);
+        return dir;
+    }
+{% endhighlight %}
+
+
 3. 解析判断，如，isLiteral，检查字符串是否代表字面量，还有对应 Vue 的过滤器，
 指令等的解析，html 模板字符串的解析等。其中定义了名为 Cache 的缓存数据结构，
 用来暂存解析结果。
@@ -166,6 +329,7 @@ function isReserved(str) {
     -. 元素插入，移除，替换，提取内容，循环操作(mapNodeRange)等
     -. 属性相关操作，v-bind 属性检测
     -. class 相关操作，补充 addClass 之类的函数
+    
 
 7. 锚点创建，用于插入和删除节点时的定位，原理是创建注释节点或者空的文本节点
 
