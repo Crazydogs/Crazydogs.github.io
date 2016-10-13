@@ -207,7 +207,7 @@ category: coding
         - shift 在队列首部移除元素
         - get 根据键名，在队列任意位置提取一个元素，并插到队列末尾
 
-- state 解析
+- 命令解析
     - pushFilter 将一个 filter 字符串解析成过滤器名和参数，推入数组
     - processFilterArg 解析 filter 参数
 {% highlight javascript %}
@@ -230,7 +230,7 @@ category: coding
         }
     }
 {% endhighlight %}
-- state 解析
+- 命令解析
     - parseDirective 解析指令
 {% highlight javascript %}
     // 解析形如 "a + 1 | uppercase" 这样的字符串
@@ -314,28 +314,179 @@ category: coding
     }
 {% endhighlight %}
 
+- 命令解析
+    - 正则字符串处理
+        - escapeRegex 转义字符串中的特殊字符，生成一个能用于构造正则的字符串
+        - compileRegex 生成识别边界界定符的正则 （默认是 {{ }} {{{ }}}）
+    - parseText 字符串解析，将字符串中的 token 提取出来 (双括号或三括号包裹的内容)
+        如输入 'a {{b}} c'
+        输出 [
+            {value: 'a '},
+            {tag: true, value: 'b', html: false, oneTime: false},
+            {value: ' c'}
+        ]
+        {% highlight javascript %}
+            function parseText(text) {
+                if (!cache) {
+                    compileRegex();
+                }
+                var hit = cache.get(text);
+                // 如有缓存使用缓存
+                if (hit) {
+                    return hit;
+                }
+                if (!tagRE.test(text)) {
+                    // 如果没有识别到边界符，直接返回
+                    return null;
+                }
+                var tokens = [];
+                var lastIndex = tagRE.lastIndex = 0;
+                var match, index, html, value, first, oneTime;
+                /* eslint-disable no-cond-assign */
+                while (match = tagRE.exec(text)) {
+                    /* eslint-enable no-cond-assign */
+                    index = match.index;
+                    if (index > lastIndex) {
+                        // 不在双括号或三括号中的内容
+                        tokens.push({
+                            value: text.slice(lastIndex, index)
+                        });
+                    }
+                    // tag token
+                    // 是否有三大括号内容
+                    html = htmlRE.test(match[0]);
+                    // 获取括号中间的内容
+                    value = html ? match[1] : match[2];
+                    first = value.charCodeAt(0);
+                    oneTime = first === 42; // *
+                    value = oneTime ? value.slice(1) : value;
+                    tokens.push({
+                        tag: true,
+                        value: value.trim(),
+                        html: html,
+                        oneTime: oneTime
+                    });
+                    lastIndex = index + match[0].length;
+                }
+                if (lastIndex < text.length) {
+                    tokens.push({
+                        value: text.slice(lastIndex)
+                    });
+                }
+                cache.put(text, tokens);
+                return tokens;
+            }
+        {% endhighlight %}
 
-3. 解析判断，如，isLiteral，检查字符串是否代表字面量，还有对应 Vue 的过滤器，
-指令等的解析，html 模板字符串的解析等。其中定义了名为 Cache 的缓存数据结构，
-用来暂存解析结果。
+- 命令解析
+    - tokensToExp 将多个 token 组合到表达式字符串中
+        如输入 'a {{b}} c' 输出 '"a " + b + " c"'
+    - formatToken 处理单个 token
+        如果不是 tag (即双括号/三括号包裹内容)，则直接返回，如果是，进行求值操作
+    - inlineFilters 行内 filter 解析
+    {% highlight javascript %}
+    var filterRE = /[^|]\|[^|]/;
+    function inlineFilters(exp, single) {
+        if (!filterRE.test(exp)) {
+            // 如果没有 filter，直接返回
+            return single ? exp : '(' + exp + ')';
+        } else {
+            // 有 filter 的话对字符串进行解析
+            var dir = parseDirective(exp);
+            if (!dir.filters) {
+                return '(' + exp + ')';
+            } else {
+                return 'this._applyFilters(' + dir.expression + // value
+                        ',null,' + // oldValue (null for read)
+                        JSON.stringify(dir.filters) + // filter descriptors
+                        ',false)'; // write?
+            }
+        }
+    }
+    {% endhighlight %}
 
-4. 配置项，定义了 config 变量，保存配置信息，包括各种开关（debug, warning ...）,
-常量，分隔符等
+- config 全局配置
+    定义了 config 变量，保存配置信息，包括各种开关（debug, warning ...），常量，分隔符等
+    设置分隔符会让命令解析的缓存失效
 
-5. transition 相关操作
+- warning 根据 config 配置生成 warn 函数
 
-6. dom 元素相关操作
-    -. query 查询，inDoc(检测是否在 document 中)
-    -. 元素插入，移除，替换，提取内容，循环操作(mapNodeRange)等
-    -. 属性相关操作，v-bind 属性检测
-    -. class 相关操作，补充 addClass 之类的函数
-    
+- transition 带过渡动画操作
+    - appendWithTransition 添加元素
+    - beforeWithTransition 在元素之前插入
+    - removeWithTransition 删除元素
+    - applyTransition 过渡动画实现
 
-7. 锚点创建，用于插入和删除节点时的定位，原理是创建注释节点或者空的文本节点
+- 节点操作相关
+    - query 查询一个元素
+    - inDoc 检查一个节点是否在文档中(nodetype 须为 1)
+    - getAttr 获取一个节点的一个属性，并将属性从节点上移除
+    - getBindAttr 获取一个 v-bind 属性
+    - hasBindAttr 检查一个节点是否有绑定属性
+    - before 在指定节点前插入节点
+    - after 在指定节点后插入节点
+    - remove 移除节点
+    - prepend 在节点最前面插入子节点
+    - replace 替换节点
+    - on 在节点上绑定事件，实际上是调用 addEventListener
+    - off 移除事件绑定
+    - getClass 获取 css 类，包含对 IE9 的兼容
+    - setClass 设置 css 类，包含对 IE9 的兼容
+    - addClass 添加 css 类
+    - removeClass 移除 css 类
+    - extractContent 提取节点中的内容，生成 fragment 或 element
+    - trimNode 去除首尾空格，注释
+    - isTrimable 判断节点是否须要删除
+    - isTemplate 检查节点是否为 template 标签
+    - crateAnchor 创建锚点，主要用于节点的插入和删除
+    - findRef 获取一个节点的 v-ref 属性，返回其驼峰形式
+    - mapNodeRange 在一系列节点上 map 函数，参数为起始节点，结束节点和操作函数
+        这一组节点须为同一个节点的子节点并且是连续的
+    - removeNodeRange 删除一系列节点，可以捕获被删除的节点，删除完成后可触发回调
+    - isFragment 检查是否为 fragment，即 nodeType 为 11
+    - getOuterHTML 获取 outerHtml 属性
+    - isUnknownElement 检查是否为未知的标签元素
 
-8. ref 相关操作，搜索 ref
+- 组件识别
+    - checkComponentAttr 检查一个元素是否为 vue 组件，如果是的话返回组件 id
+    {% highlight javascript %}
+    function checkComponentAttr(el, options) {
+        // 获取标签名
+        var tag = el.tagName.toLowerCase();
+        // 检查标签是否有属性
+        var hasAttrs = el.hasAttributes();
+        if (!commonTagRE.test(tag) && !reservedTagRE.test(tag)) {
+            // 如果不是原生标签也不是 vue 标签（slot|partial|component...）
+            if (resolveAsset(options, 'components', tag)) {
+                return { id: tag };
+            } else {
+                // 获取 is 属性（is 用于在 tr/option 之类的标签上，表示其为组件）
+                var is = hasAttrs && getIsBinding(el, options);
+                if (is) {
+                    return is;
+                } else if ('development' !== 'production') {
+                    // 发出错误信息
+                    var expectedTag = options._componentNameMap && options._componentNameMap[tag];
+                    if (expectedTag) {
+                        warn('Unknown custom element: <' + tag + '> - ' + 'did you mean <' + expectedTag + '>? ' + 'HTML is case-insensitive, remember to use kebab-case in templates.');
+                    } else if (isUnknownElement(el, tag)) {
+                        warn('Unknown custom element: <' + tag + '> - did you ' + 'register the component correctly? For recursive components, ' + 'make sure to provide the "name" option.');
+                    }
+                }
+            }
+        } else if (hasAttrs) {
+            return getIsBinding(el, options);
+        }
+    }
+    {% endhighlight %}
+- 组件识别
+    - getIsBinding 获取 is 绑定，返回值为 {id: 组件id, dynamic: 是否为动态绑定}
 
-9. html 标签识别，component 识别
+- strats 配置重写策略
+    - mergeData 辅助 merge 函数，合并策略为补充，不重写。递归合并
+    - strats.data data 的合并策略
+
+
 
 10. vue 实例的属性重写机制
     -. 各种 option， el，data 等的重写机制。
