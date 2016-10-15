@@ -484,23 +484,266 @@ category: coding
 
 - strats 配置重写策略
     - mergeData 辅助 merge 函数，合并策略为补充，不重写。递归合并
-    - strats.data data 的合并策略
+    - strats.data data 的合并策略，对于组件的 data，检查其是否为函数，如果是函数，
+        返回一个函数，返回值为将父 data 调用结果 mergeData 合并到子 data 调用结果中
+    - strats.el 合并策略是优先使用子值，如果没有再使用父值，不进行合并
+    - strats.init strats.created strats.ready ... 等钩子函数，合并策略为多个函数拼接，
+        得到一个函数数组
+    - mergeAssets 合并 assets 属性（component/directive/elementDirective/filter/transition/partial）
+        合并策略是先将 assets 数组转为键值对的形式，然后用 extend 合并，
+        写入复数形式属性（components/directives/...）中
+    - strats.watch strats.events 像钩子函数一样，也是作为数组拼接
+    - strats.props strats.methods strats.computed 这些的策略是子属性覆盖父属性
+    - defaultStrat 默认策略，当第二个参数存在是使用第二个参数否则使用第一个
 
+- 组件配置
+    - guardComponents 确保组件的选项正确生效
+    {% highlight javascript %}
+    function guardComponents(options) {
+        if (options.components) {
+            // 将 components 转为 key-value 形式
+            var components = options.components = guardArrayAssets(options.components);
+            // 获取组件 id
+            var ids = Object.keys(components);
+            var def;
+            if ('development' !== 'production') {
+                var map = options._componentNameMap = {};
+            }
+            for (var i = 0, l = ids.length; i < l; i++) {
+                var key = ids[i];
+                if (commonTagRE.test(key) || reservedTagRE.test(key)) {
+                // 检查命名是否非法
+                    'development' !== 'production' && warn('Do not use built-in or reserved HTML elements as component ' + 'id: ' + key);
+                    continue;
+                }
+                // record a all lowercase <-> kebab-case mapping for
+                // possible custom element case error warning
+                if ('development' !== 'production') {
+                    map[key.replace(/-/g, '').toLowerCase()] = hyphenate(key);
+                }
+                def = components[key];
+                if (isPlainObject(def)) {
+                    // 注册子组件
+                    components[key] = Vue.extend(def);
+                }
+            }
+        }
+    }
+    {% endhighlight %}
+- 组件配置
+    - guardProps 将所有 props 转为 key-value 形式
+    - guardArrayAssets 将数组形式的 assets 转为 key-value 形式，key 为 name 或者 id
+    - mergeOptions 合并两个 option
+    {% highlight javascript %}
+    function mergeOptions(parent, child, vm) {
+        // 对子选项进行预处理
+        guardComponents(child);
+        guardProps(child);
+        if ('development' !== 'production') {
+            if (child.propsData && !vm) {
+                warn('propsData can only be used as an instantiation option.');
+            }
+        }
+        var options = {};
+        var key;
+        // 如果有用 extends 声明扩展另一个组件
+        if (child['extends']) {
+            parent = typeof child['extends'] === 'function' ? mergeOptions(parent, child['extends'].options, vm) : mergeOptions(parent, child['extends'], vm);
+        }
+        // 如果使用 mixins 其他的配置项
+        if (child.mixins) {
+            for (var i = 0, l = child.mixins.length; i < l; i++) {
+                var mixin = child.mixins[i];
+                var mixinOptions = mixin.prototype instanceof Vue ? mixin.options : mixin;
+                parent = mergeOptions(parent, mixinOptions, vm);
+            }
+        }
+        // 使用合适的合并策略合并各个配置项
+        for (key in parent) {
+            mergeField(key);
+        }
+        for (key in child) {
+            if (!hasOwn(parent, key)) {
+                mergeField(key);
+            }
+        }
+        function mergeField(key) {
+            var strat = strats[key] || defaultStrat;
+            options[key] = strat(parent[key], child[key], vm, key);
+        }
+        return options;
+    }
+    {% endhighlight %}
+- 组件配置
+- resolveAsset 获取资源
+{% highlight javascript %}
+function resolveAsset(options, type, id, warnMissing) {
+    /* istanbul ignore if */
+    if (typeof id !== 'string') {
+        return;
+    }
+    var assets = options[type];
+    var camelizedId;
+    // 尝试多种格式
+    var res = assets[id] ||
+        // camelCase ID
+        assets[camelizedId = camelize(id)] ||
+        // Pascal Case ID
+        assets[camelizedId.charAt(0).toUpperCase() + camelizedId.slice(1)];
+    if ('development' !== 'production' && warnMissing && !res) {
+        warn('Failed to resolve ' + type.slice(0, -1) + ': ' + id, options);
+    }
+    return res;
+}
+{% endhighlight %}
 
+- 依赖处理
+    - Dep 依赖对象
+        - 构造函数，递增获得一个 id，维持一个 subs 数组
+        - target 当前的 watcher
+        - prototype.addSub 添加一个订阅
+        - prototype.removeSub 删除一个订阅
+        - prototype.depend 将自己添加到 target 中
+        - prototype.notify 通知所有订阅自己的对象进行更新
+    - 在原生的数组变异方法上挂载钩子
+    {% highlight javascript %}
+    ;['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse'].forEach(function (method) {
+            // cache original method
+            var original = arrayProto[method];
+            def(arrayMethods, method, function mutator() {
+                // avoid leaking arguments:
+                // http://jsperf.com/closure-with-arguments
+                var i = arguments.length;
+                var args = new Array(i);
+                while (i--) {
+                    args[i] = arguments[i];
+                }
+                var result = original.apply(this, args);
+                var ob = this.__ob__;
+                var inserted;
+                switch (method) {
+                    case 'push':
+                        inserted = args;
+                        break;
+                    case 'unshift':
+                        inserted = args;
+                        break;
+                    case 'splice':
+                        inserted = args.slice(2);
+                        break;
+                }
+                // 如果新插入了值，将其加入监控
+                if (inserted) ob.observeArray(inserted);
+                // 通知依赖对象进行更新
+                ob.dep.notify();
+                return result;
+            });
+    });
+    {% endhighlight %}
+- 依赖处理
+    - 添加数组原型方法
+        - $set 通过索引设置数组某一项的值，其实调用的 splice
+        - $remove 从数组中移除一项，其实调用的 splice
+    - shouldConvert 监控配置
+    {% highlight javascript %}
+    // 配置开关，是否进行监听
+    var shouldConvert = true;
+    function withoutConversion(fn) {
+        shouldConvert = false;
+        fn();
+        shouldConvert = true;
+    }
+    {% endhighlight %}
+- 依赖处理
+    - Observer 对象
+        - 构造函数
+        {% highlight javascript %}
+        // 附加到每一个须要被监听的对象上，将其属性转为 getter 和 setter
+        // 通过 getter 和 setter 实现依赖和更新的处理
+        function Observer(value) {
+            this.value = value;
+            this.dep = new Dep();
+            // 添加 __ob__ 属性
+            def(value, '__ob__', this);
+            if (isArray(value)) {
+                var augment = hasProto ? protoAugment : copyAugment;
+                augment(value, arrayMethods, arrayKeys);
+                this.observeArray(value);
+            } else {
+                // 设置 getter 和 setter
+                this.walk(value);
+            }
+        }
+        {% endhighlight %}
+        - prototype.walk 将对象的属性转为 getter 和 setter
+        - prototype.observeArray 监控数组值
+        - prototype.convert 将对象的一个属性转为响应数据
+        - prototype.addVm 添加拥有此数据的 vue 实例
+        - prototype.removeVm 删除所有者 vue 实例
+    - 辅助函数
+        - protoAugment 给一个对象添加 __proto__  属性
+        - copyAugment 复制函数，从一个对象复制属性到另一个对象，并设为响应式数据
+        - observe 为一个值添加监控对象，如果已被监控直接返回，如果配置开关关闭返回 undefinded
+        - defineReactive 为一个对象的某个属性设置 getter 和 setter 使其成为响应式的数据
+        {% highlight javascript %}
+        function defineReactive(obj, key, val) {
+            var dep = new Dep();
 
-10. vue 实例的属性重写机制
-    -. 各种 option， el，data 等的重写机制。
-    -. Vue 对象参数 merge 方法
+            var property = Object.getOwnPropertyDescriptor(obj, key);
+            if (property && property.configurable === false) {
+                return;
+            }
 
-11. 变更监控
-    -. Dep 对象，用于记录依赖，对象变更的时候更新所有依赖于变更对象的数据。
-    -. 数组变异方法，如 push, pop, shift 之类的检测，增加 $set, $remove 方法
-    -. 提供不触发监听检测的方法
-    -. Observer 对象，用于监听变更。会在须要监听的目标上绑定一个 __ob__ 属性指向
-    Observer。Observer 提供 walk 方法为对象每个属性设置 getter 和 setter，
-    这样就可以在属性被访问/修改的时候触发事件，Observer 还提供 observeArray 实现对数组的监控。
-    -. Observer 对象提供添加和移除 owner vm 的方法，用于触发相应的变化监控
-    -. observe 方法, defineReactive 方法用于给对象属性增加监控器
+            // cater for pre-defined getter/setters
+            var getter = property && property.get;
+            var setter = property && property.set;
+
+            var childOb = observe(val);
+            Object.defineProperty(obj, key, {
+                enumerable: true,
+                configurable: true,
+                get: function reactiveGetter() {
+                    var value = getter ? getter.call(obj) : val;
+                    if (Dep.target) {
+                        dep.depend();
+                        if (childOb) {
+                            childOb.dep.depend();
+                        }
+                        if (isArray(value)) {
+                            for (var e, i = 0, l = value.length; i < l; i++) {
+                                e = value[i];
+                                e && e.__ob__ && e.__ob__.dep.depend();
+                            }
+                        }
+                    }
+                    return value;
+                },
+                set: function reactiveSetter(newVal) {
+                    var value = getter ? getter.call(obj) : val;
+                    if (newVal === value) {
+                        return;
+                    }
+                    if (setter) {
+                        setter.call(obj, newVal);
+                    } else {
+                        val = newVal;
+                    }
+                    childOb = observe(newVal);
+                    dep.notify();
+                }
+            });
+        }
+        {% endhighlight %}
+
+- util 辅助对象
+- initMixin 初始化
+    - 设置 Vue.prototype._init vue 实例初始化函数，每个实例都会调用，包括使用 extend
+    创建的实例
+
+- path 解析
+    - getPathCharType 检查字符类型，分为几类： [, ], ., ', ", ident, ws, number, else
+    - formatSubPath 
+    
 
 12. util 对象
 
