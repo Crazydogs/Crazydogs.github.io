@@ -1,0 +1,61 @@
+---
+layout: post
+title:  "页面测试工具 testcafe"
+date:   2016-10-27 11:54:00
+category: coding
+---
+
+不知不觉离第一篇已经一年了，还真是没什么长进呢。
+
+写测试这种东西，其实工作中还挺少的，可能写后端接口的时候还有可能写一些单元测试，
+但平时很多需求都太灵散了，写单元测试可能并没有什么机会用上。
+
+至于写前端页面，目前 qa 多数也就写写测试用例，水一些的可能就人肉 monkey 一下。
+作为开发，还真没写过什么测试代码。
+
+前几天闲逛的时候发现了这个库 [testcafe](https://devexpress.github.io/testcafe/),
+意外地很对胃口。简单来说，他做的就是用浏览器打开你想要的测试的页面，同时允许你使用
+node 脚本去操作 dom，模拟用户行为，获取用户状态，就像你在浏览器 console 里面那样自然。
+至于生成测试报告什么的，就是些锦上添花的内容了。
+
+所以其实这个库的作用更偏向于一个功能测试，而不是单元测试，写某些逻辑复杂的表单页面，
+表现还是很好的，写一些通用的边界检测类型检测，再针对表单写一些测试用例，就可以开心得跑起来了。
+
+测试脚本访问浏览器，相当是 IO 操作了，但它能支持 async/await 语法，写起来基本就不用太在意这个细节了。
+
+贴一下 demo 代码感受一下
+{% highlight javascript %}
+import { Selector } from 'testcafe';
+
+// Declare the parameterized Selector function
+// to get access to a DOM element identified by the `id` attribute
+const getElementById = Selector(id => document.getElementById(id));
+
+fixture `Getting Started`
+    .page('http://devexpress.github.io/testcafe/example');
+
+test('My first test', async t => {
+    await t
+        .typeText('#developer-name', 'John Smith')
+        .click('#submit-button');
+
+    // Use the Selector function to get access to the article header
+    const articleHeader = await getElementById('article-header');
+
+    // Obtain the text of the article header
+    const headerText = articleHeader.innerText;
+});
+{% endhighlight %}
+
+npm 全局安装一下之后测试命令也很简单
+
+    testcafe chrome test1.js
+
+简直就是傻瓜式，稍微看一下文档就能写了，而且因为直接访问的页面，所以也不用像单元测试一样，
+做很多的依赖模拟，对我这种懒癌患者来说真是再适合不过了。
+
+缺点的话，也有几个
+1. 测试运行时间稍微有点长了，可能是须要准备测试环境的原因
+2. 没法很好地做兼容性测试，做用户操作相关了逻辑可能会好一些
+
+所以，港真，规模大了还是要研究一下单元测试感觉会靠谱一些。
