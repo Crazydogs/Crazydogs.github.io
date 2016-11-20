@@ -1,13 +1,13 @@
 ---
 layout: post
-title:  "Bookshelf"
+title:  "node Mysql 库 Bookshelf"
 date:   2016-8-11 16:44:10
 category: coding
 ---
 
 拼 SQL 是一件非常痛苦的事情，加上本身对数据库不是很熟，这两天感觉快把自己写挂了。
 今天在找 node 下使用事务的方案的时候发现了 Bookshelf 这个库，试用了一下非常方便
-而且个人感觉 API 设计得很简介。
+而且个人感觉 API 设计得很简洁。
 
 ## 官网
 [地址](http://bookshelfjs.org/)
