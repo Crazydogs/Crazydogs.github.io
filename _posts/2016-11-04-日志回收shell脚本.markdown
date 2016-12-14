@@ -59,9 +59,11 @@ linux 开发机用 crontab 还是很方便的，但就是要自己跑上线上�
 也是使用 crontab 进行日志的收集。下载日志很简单，直接放一个有 http 服务的地方，
 然后 webget 就好了，比较麻烦的是按时间 merge 日志的操作。
 日志的每一行大概是这样
+
 ````
-time[1478247635187] key1[xx] key2[yy] key3[zz]
+    time[1478247635187] key1[xx] key2[yy] key3[zz]
 ````
+
 须要做的工作是切出 time 字段的值，再进行归并操作。但 shell 里面的数据结构非常简单，
 基本上就是简单的变量还有数组。
 
@@ -72,7 +74,73 @@ time[1478247635187] key1[xx] key2[yy] key3[zz]
 放着晚上跑跑排序就好了，只要把日志格式改一下，去掉字段名，用特殊符号分隔字段并不是很复杂。
 
 PS: 不过最后在不懈努力下，总算在服务器上能用 python 了，可以直接拿到文件句柄，
-归并数据也就不是很么大问题了。
+归并数据也就不是很么大问题了。大概是这样
+
+{% highlight python %}
+    import re
+    import os
+
+    // 文件列表
+    fileNameList = [];
+    fileList = [];
+
+class LogFile:
+    def __init__(self, fileName):
+        '''打开文件'''
+        self.fileObj = open(fileName)
+        self.currentLine = (self.fileObj.readline()) if (self.fileObj) else None
+        self.currentTime = re.search(r'begin_time\[(\d*?)\]', self.currentLine).group(1) \
+            if self.currentLine else None
+    def nextLine(self):
+        '''读取文件下一行'''
+        if self.currentLine:
+            self.currentLine = self.fileObj.readline()
+            self.currentTime = re.search(r'begin_time\[(\d*?)\]', self.currentLine).group(1) \
+                if self.currentLine else None
+def isDone():
+    "是否已经读完所有文件"
+    for logFile in fileList:
+        if logFile.currentLine:
+            return False
+    return True
+
+def getMinFile():
+    "获取当前时间最小的文件"
+    minFile = None
+    for logFile in fileList:
+        if (not logFile.currentTime):
+            # 跳过已经读完的文件
+            continue
+        if (not minFile):
+            minFile = logFile
+        else:
+            minFile = logFile \
+                if logFile.currentTime < minFile.currentTime \
+                else minFile
+    return minFile
+
+def mergelog(logTime, logPath):
+    '''合并日志文件
+    logTime 字符串，日志时间 eg. "2016110814"
+    logPath 字符串，日志所在目录 eg. "./xxxxxx2016/11/08/"
+    '''
+    # 过滤得到指定时间的日志
+    allLogFiles = os.listdir(logPath)
+    for item in allLogFiles:
+        if item.count(logTime) and not item.count('merged'):
+            fileNameList.append(logPath + item)
+    # 初始化文件对象
+    for item in fileNameList:
+        fileList.append(LogFile(item))
+    print fileList
+    # 输出合并后的日志
+    outputFile = open(logPath + logTime + '.merged', 'w+')
+    while (not isDone()):
+        minFile = getMinFile()
+        outputFile.write(minFile.currentLine)
+        minFile.nextLine()
+    outputFile.close()
+{% endhighlight %}
 
 ## summary
 shell 虽然是很方便，但局限性还是太强了，基本上没什么好用的数据结构，
