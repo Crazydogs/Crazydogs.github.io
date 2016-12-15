@@ -69,15 +69,16 @@ XAMPP 这种东西真是造福我这种新手玩家，传说中的一键安装�
 3. 邮件服务
     公司内网邮箱的安全策略问题，须要使用特定的 SMTP 服务，须要在配置文件中设置
     $wgSMTP 这个变量。
+
     ````
-        $wgSMTP = array(
-            'host' => "邮箱域名",
-            'IDHost' => "发送域名",
-            'port' => 25,
-            'auth' => true,
-            'username' => '发件用户名',
-            'password' => '密码',
-        );
+            $wgSMTP = array(
+                'host' => "邮箱域名",
+                'IDHost' => "发送域名",
+                'port' => 25,
+                'auth' => true,
+                'username' => '发件用户名',
+                'password' => '密码',
+            );
     ````
 
 ## EOF
