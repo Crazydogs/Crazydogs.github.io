@@ -60,7 +60,7 @@ Readable 的作用一般是从数据源中汲取数据，供给整个数据流�
         // do somthing
     });
     // 通过 pipe 发送数据也是一样的，会自动切换到流模式
-    myReadable.pipe(someWriteableStream);
+    myReadable.pipe(someWritableStream);
 {% endhighlight %}
 
 如果须要切换回暂停模式的时候，须要移除对 data 事件的监听，还要调用 pasue() 方法。
