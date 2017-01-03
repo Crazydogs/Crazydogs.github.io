@@ -1,0 +1,162 @@
+---
+layout: post
+title:  "Node 流中的一些小疑惑"
+date:   2016-12-28 21:25:10
+category: coding
+---
+
+最近在尝试翻译 node 的官方文档，选了 stream 这一部分。翻译的过程中发现有些东西，
+文档里面也讲得不是很清楚，所以稍微研究了一下。
+
+## pipe 向多个可写流
+
+文档里面说到 pipe() 方法可以将多个可写流接到一个可读流上，
+但是对这么做的具体行为并没有任何介绍。
+
+那就先实现一个看看吧。
+
+````js
+    'use strict';
+
+    const stream = require('stream');
+
+    let count = 0;
+    const myRead = new stream.Readable({
+        read() {
+            count++;
+            if (count < 10) {
+                this.push('Count ' + count);
+            } else {
+                this.push(null);
+            }
+        }
+    });
+
+    const myWrite1 = new stream.Writable({
+        write(chunk, encoding, callback) {
+            console.log('write 1 get chunk: ' + chunk);
+            setTimeout(() => {
+                console.log('write 1 finish chunk: ' + chunk);
+                callback();
+            }, 100);
+        }
+    });
+
+    const myWrite2 = new stream.Writable({
+        write(chunk, encoding, callback) {
+            console.log('write 2 get chunk: ' + chunk);
+            setTimeout(() => {
+                console.log('write 2 finish chunk: ' + chunk);
+                callback();
+            }, 300);
+        }
+    });
+
+    myRead.pipe(myWrite1);
+    myRead.pipe(myWrite2);
+````
+
+运行这段脚本会在控制台输出
+
+````
+write 1 get chunk: Count 1
+write 2 get chunk: Count 1
+write 1 finish chunk: Count 1
+write 1 get chunk: Count 2
+write 1 finish chunk: Count 2
+write 1 get chunk: Count 3
+write 2 finish chunk: Count 1
+write 2 get chunk: Count 2
+write 1 finish chunk: Count 3
+write 1 get chunk: Count 4
+write 1 finish chunk: Count 4
+write 1 get chunk: Count 5
+write 1 finish chunk: Count 5
+write 1 get chunk: Count 6
+write 2 finish chunk: Count 2
+write 2 get chunk: Count 3
+write 1 finish chunk: Count 6
+write 1 get chunk: Count 7
+write 1 finish chunk: Count 7
+write 1 get chunk: Count 8
+write 1 finish chunk: Count 8
+write 1 get chunk: Count 9
+write 2 finish chunk: Count 3
+write 2 get chunk: Count 4
+write 1 finish chunk: Count 9
+write 2 finish chunk: Count 4
+write 2 get chunk: Count 5
+write 2 finish chunk: Count 5
+write 2 get chunk: Count 6
+write 2 finish chunk: Count 6
+write 2 get chunk: Count 7
+write 2 finish chunk: Count 7
+write 2 get chunk: Count 8
+write 2 finish chunk: Count 8
+write 2 get chunk: Count 9
+write 2 finish chunk: Count 9
+````
+
+其实这个输出跟我之前想象的并不一样，我原以为在可读流中的数据被消耗之后就会消失，像这样的实现应该是两个可写流争夺数据，而 1
+号因为处理速度比较快，会抢到比 2 号更多的数据。但事实上，
+可读流的所有数据都在两个可写流中处理了。
+
+那进一步，给两个可写流设置 `highWaterMark` 参数，为了方便控制缓冲区大小，
+顺便把流设置成对象模式。即给 myWrite1 和 myWrite2 构造函数分别加上下面的选项
+
+````js
+    // myWrite1
+    {
+        objectMode: true,
+        highWaterMark: 4
+    }
+
+    // myWrite2
+    {
+        objectMode: true,
+        highWaterMark: 3
+    }
+````
+
+再次运行这段代码会输出
+
+````js
+write 1 get chunk: Count 1
+write 2 get chunk: Count 1
+write 1 finish chunk: Count 1
+write 1 get chunk: Count 2
+write 1 finish chunk: Count 2
+write 1 get chunk: Count 3
+write 2 finish chunk: Count 1
+write 2 get chunk: Count 2
+write 1 finish chunk: Count 3
+write 2 finish chunk: Count 2
+write 2 get chunk: Count 3
+write 2 finish chunk: Count 3
+write 1 get chunk: Count 4
+write 2 get chunk: Count 4
+write 1 finish chunk: Count 4
+write 1 get chunk: Count 5
+write 1 finish chunk: Count 5
+write 1 get chunk: Count 6
+write 2 finish chunk: Count 4
+write 2 get chunk: Count 5
+write 1 finish chunk: Count 6
+write 2 finish chunk: Count 5
+write 2 get chunk: Count 6
+write 2 finish chunk: Count 6
+write 1 get chunk: Count 7
+write 2 get chunk: Count 7
+write 1 finish chunk: Count 7
+write 1 get chunk: Count 8
+write 1 finish chunk: Count 8
+write 1 get chunk: Count 9
+write 2 finish chunk: Count 7
+write 2 get chunk: Count 8
+write 1 finish chunk: Count 9
+write 2 finish chunk: Count 8
+write 2 get chunk: Count 9
+write 2 finish chunk: Count 9
+````
+
+可以看到输出有了很大的变化。
