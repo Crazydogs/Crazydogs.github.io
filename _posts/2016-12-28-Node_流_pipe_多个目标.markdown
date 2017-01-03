@@ -45,9 +45,7 @@ category: coding
                     + ' at ' + clc.red(timePass()));
                 callback();
             }, 1000);
-        },
-        objectMode: true,
-        highWaterMark: 4
+        }
     });
 
     const myWrite2 = new stream.Writable({
@@ -59,9 +57,7 @@ category: coding
                     + ' at ' + clc.red(timePass()));
                 callback();
             }, 3000);
-        },
-        objectMode: true,
-        highWaterMark: 3
+        }
     });
 
     function timePass() {
