@@ -122,6 +122,7 @@ category: coding
 
 可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
 28 行处对数据的归一化
+
 #### 分对数函数归一
 **x = 1 / (1 + exp(-x))**
 可以将很大的负数映射成 0，很大的正数映射成 1，0 映射成 0.5
