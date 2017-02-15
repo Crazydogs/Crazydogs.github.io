@@ -70,25 +70,25 @@ category: coding
 ## 通过数据可视化了解数据
 1. 平行坐标图
 
-    ````
-        dataset = pandas.read\_csv(...)
-        for i in range(200):
-            # 获取指定位置的数据
-            dataRow = dataset.iloc[i, 0:60]
-            # 直接使用 plot 方法即可绘制平行坐标图
-            dataRow.plot(color=‘red’)
-            # 绘制
-            matplotlib.pyplot.show()
-    ````
+````
+    dataset = pandas.read\_csv(...)
+    for i in range(200):
+        # 获取指定位置的数据
+        dataRow = dataset.iloc[i, 0:60]
+        # 直接使用 plot 方法即可绘制平行坐标图
+        dataRow.plot(color=‘red’)
+        # 绘制
+        matplotlib.pyplot.show()
+````
 
     可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 2. 交会图
 
-    ````
-        # 绘制交会图
-        matplotlib.pyplot.scater(dataRow1, dataRow2)
-        matplotlib.pyplot.show()
-    ````
+````
+    # 绘制交会图
+    matplotlib.pyplot.scater(dataRow1, dataRow2)
+    matplotlib.pyplot.show()
+````
 
     可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrPlot.py)
 3. 热图
@@ -104,11 +104,11 @@ category: coding
 
     可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrHeatMap.py)
 4. 箱线图
-    ````
-        import pylab
-        pylab.boxplot(dataSet)
-        pylab.show()
-    ````
+````
+    import pylab
+    pylab.boxplot(dataSet)
+    pylab.show()
+````
     可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
 5. 数据归一化
     最普遍的方法是，将数据都变成均值为 0，标准差为 1
