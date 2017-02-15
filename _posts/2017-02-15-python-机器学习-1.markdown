@@ -80,8 +80,8 @@ category: coding
         # 绘制
         matplotlib.pyplot.show()
 ````
-可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 
+可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 2. 交会图
 
 ````
