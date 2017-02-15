@@ -116,14 +116,14 @@ category: coding
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
 
 ### 数据归一化
-    最普遍的方法是，将数据都变成均值为 0，标准差为 1
-    即对每一项执行 **item = (item - mean) / std**
+最普遍的方法是，将数据都变成均值为 0，标准差为 1
+即对每一项执行 **item = (item - mean) / std**
 
-    可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
-    28 行处对数据的归一化
+可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
+28 行处对数据的归一化
 ### 分对数函数归一
-    **x = 1 / (1 + exp(-x))**
-    可以将很大的负数映射成 0，很大的正数映射成 1，0 映射成 0.5
+**x = 1 / (1 + exp(-x))**
+可以将很大的负数映射成 0，很大的正数映射成 1，0 映射成 0.5
 
-    可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
-    32 行处对数据的归一化
+可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
+32 行处对数据的归一化
