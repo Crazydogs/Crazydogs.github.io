@@ -68,7 +68,7 @@ category: coding
 - sklearn 一些常用的学习算法
 
 ## 通过数据可视化了解数据
-1. 平行坐标图
+### 平行坐标图
 
 ````
     dataset = pandas.read_csv(...)
@@ -83,7 +83,7 @@ category: coding
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 
-2. 交会图
+### 交会图
 
 ````
     # 绘制交会图
@@ -93,7 +93,7 @@ category: coding
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrPlot.py)
 
-3. 热图
+### 热图
 
 ````
     #绘制热图
@@ -106,7 +106,7 @@ category: coding
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrHeatMap.py)
 
-4. 箱线图
+### 箱线图
 ````
     import pylab
     pylab.boxplot(dataSet)
@@ -115,13 +115,15 @@ category: coding
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
 
-5. 数据归一化
+### 数据归一化
     最普遍的方法是，将数据都变成均值为 0，标准差为 1
-    即对每一项执行 item = (item - mean) / std
+    即对每一项执行 **item = (item - mean) / std**
+
     可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
     28 行处对数据的归一化
-6.分对数函数归一
-    x = 1 / (1 + exp(-x))
+### 分对数函数归一
+    **x = 1 / (1 + exp(-x))**
     可以将很大的负数映射成 0，很大的正数映射成 1，0 映射成 0.5
+
     可以参照 [这个文件中](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py) 
     32 行处对数据的归一化
