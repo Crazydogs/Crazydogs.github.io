@@ -71,7 +71,7 @@ category: coding
 
 #### 平行坐标图
 
-````
+{% highlight python %}
     dataset = pandas.read_csv(...)
     for i in range(200):
         # 获取指定位置的数据
@@ -80,39 +80,39 @@ category: coding
         dataRow.plot(color=‘red’)
         # 绘制
         matplotlib.pyplot.show()
-````
+{% endhighlight %}
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 
 #### 交会图
 
-````
+{% highlight python %}
     # 绘制交会图
     matplotlib.pyplot.scater(dataRow1, dataRow2)
     matplotlib.pyplot.show()
-````
+{% endhighlight %}
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrPlot.py)
 
 #### 热图
 
-````
+{% highlight python %}
     #绘制热图
     from pandas import DataFrame  # DataFrame 是一种 pandas 中描述表格的数据格式
     dataSet = pandas.read_csv(...)
     corMat = DataFrame(dataSet.corr())    # pandas 可以直接计算相关性矩阵
     matplotlib.pyplot.pcolor(corMat)
     atplotlib.pyplot.show()
-````
+{% endhighlight %}
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrHeatMap.py)
 
 #### 箱线图
-````
+{% highlight python %}
     import pylab
     pylab.boxplot(dataSet)
     pylab.show()
-````
+{% endhighlight %}
 
 可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
 
