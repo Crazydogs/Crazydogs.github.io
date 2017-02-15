@@ -80,8 +80,8 @@ category: coding
         # 绘制
         matplotlib.pyplot.show()
 ````
+可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 
-    可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/parallelPlot.py)
 2. 交会图
 
 ````
@@ -89,8 +89,8 @@ category: coding
     matplotlib.pyplot.scater(dataRow1, dataRow2)
     matplotlib.pyplot.show()
 ````
+可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrPlot.py)
 
-    可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrPlot.py)
 3. 热图
 
 ````
@@ -101,15 +101,16 @@ category: coding
     matplotlib.pyplot.pcolor(corMat)
     atplotlib.pyplot.show()
 ````
+可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrHeatMap.py)
 
-    可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/corrHeatMap.py)
 4. 箱线图
 ````
     import pylab
     pylab.boxplot(dataSet)
     pylab.show()
 ````
-    可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
+可以参照 [这里的代码](https://github.com/Crazydogs/python_machine_learning_example/blob/master/abalone/boxplot.py)
+
 5. 数据归一化
     最普遍的方法是，将数据都变成均值为 0，标准差为 1
     即对每一项执行 item = (item - mean) / std
