@@ -14,22 +14,22 @@ category: coding
 
 特征通常以矩阵的形式表示
 
-{% highlight %}
+````
     x11 x12 ... x1n
     x21 x22 ... x2n
 X = ... ... ... ...
     ... ... ... ...
     xm1 xm2 ... xmn
-{% endhighlight %}
+````
 
 预测目标值通常用向量 Y 表示
 
-{% highlight %}
+````
     y1
 Y = y2
     ...
     ym
-{% endhighlight %}
+````
 
 回归问题的本质就是寻找一个预测函数 pred()，使用它来预测结果
 
