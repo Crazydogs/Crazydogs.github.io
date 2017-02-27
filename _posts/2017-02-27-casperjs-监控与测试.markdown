@@ -1,0 +1,101 @@
+---
+layout: post
+title:  "casperjs 监控与测试"
+date:   2017-02-27 16:44:10
+category: coding
+---
+
+## 起因
+
+之前为了不每次都更新官网的 apk 包，就抓了一个百度手机助手的接口，直接下载，
+存都不用存了，非常地惬意。
+
+不过开心没多久，事情就来了，有一天 PM 和 QA 跑过来，说下载挂掉了。我这几年的
+0 线上事故记录就这么被打破了……
+
+不过还是要怪自己太不谨慎了，毕竟没有合作对接，手助那边改接口也是很正常的事情，
+这种不靠谱的依赖，当个教训吧。
+
+但是这个事故还有一个问题，下载失效不是我们自己发现的，而是用户报上来的，
+后来问了手助的人，估计这个 bug 在线上挂了可能有快一天，说明监控方面还是有很大的问题。
+
+以前由于资源存在自己的服务器上，监控比较方便，现在依赖手助的接口和下载渠道，
+监控起来就不大好搞了。然后周末在瞎逛的时候就发现了这个很不错的库。
+
+## casperjs 是什么
+
+[Casperjs](http://casperjs.readthedocs.io/en/latest/quickstart.html) 是一个对
+[Phantomjs](http://phantomjs.org/) 的封装，本质上来说，这就是一个 webkit 浏览器内核，
+只不过没有图形界面显示出来而已(不过依然能获得元素的尺寸，甚至对界面进行截图)。
+
+## 优势
+
+之前自己做页面的简单 case 检查的时候，用的是一个叫 testcafe 的库。但这个库还是要借住浏览器的环境，
+适合用来放到工作流中，检查一些功能流程。说到模拟用户行为，并进行监控的话，
+还是 Casperjs 这种没有界面的更好一些（毕竟我的 chrome 已经变成一个内存黑洞了）。
+
+虽然没有界面，但是该有的功能一个不少，毕竟是一个完整的内核。框架本身也提供了很多测试相关的功能，
+用起来比较友好，打 log 也很方便。
+
+## 安装
+
+Casperjs 让我觉得很不错的另一点是它对各个平台的支持度都很不错，基本上都有很方便的方法可以安装，
+虽然脚本是要用 js 写(毕竟要能在浏览器内核运行)，但不用 node 用 Python 也可以跑，
+解决了我沙盒机器上装不了 node 的困境。
+
+具体的安装过程可以看[这里](http://casperjs.readthedocs.io/en/latest/installation.html)
+
+## Hello world
+先写一个简单的示例
+
+{% highlight javascript %}
+const casper = require('casper').create({
+    clientScripts: ['jquery.js']    // 可以在页面中引入本地文件
+});
+
+casper.start('page url', function() {
+    this.evaluate(function () {     // 在页面中执行 js
+        console.log('Hello world'); // 不会在命令行中出现，实际上是打在页面里的。
+        $('some-button').click();   // 还可以使用刚才引入的 jQuery，即使页面上原来没有
+    });
+}
+
+casper.run(function () {
+    casper.exit();
+});
+{% endhighlight %}
+
+然后运行脚本(根据安装方式和平台不同，启动方式稍微有点不一样，详见
+[quickstart 页面](http://casperjs.readthedocs.io/en/latest/quickstart.html))，
+结果是什么都没有发生，毕竟我们只是在页面上进行了操作，还没有将状态带出来。
+
+## 简单的监控
+
+还是上面那个场景，我想要检测，用户点击按钮之后，是否跳转到了手百的下载链接，
+只要添加一个监听器就可以了
+
+{% highlight javascript %}
+casper.start('page url', function() {
+    isSuccess = false;
+    this.page.onNavigationRequested = function(url, type, willNavigate, main) {
+        if (/手百的下载CDN地址正则/.test(url)) {
+            isSuccess = true;
+        }
+    }
+    this.evaluate(function () {
+        $('download-button').click();   // 点击下载按钮
+    });
+    this.wait(3000, function() {
+        if (!isSuccess) {
+            ...             // 报警啦
+        }
+    })
+}
+
+casper.run(function () {
+    casper.exit();
+});
+{% endhighlight %}
+
+Casper 可以监控的事件还算丰富，具体可以参照[这里](http://phantomjs.org/api/webpage/handler/on-url-changed.html)
+更加复杂的监控可能就需要在页面中运行脚本，再通过 onConsoleMessage 与监控服务进行通信了。
