@@ -1,0 +1,36 @@
+---
+layout: post
+title:  "Python 机器学习 - 预测分析核心算法(4)"
+date:   2017-03-16 20:44:10
+category: coding
+---
+
+[Python 机器学习 - 预测分析核心算法(1)](http://crazydogs.github.io/coding/2017/02/15/python-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-1.html)
+[Python 机器学习 - 预测分析核心算法(2)](http://crazydogs.github.io/coding/2017/02/19/python-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-2.html)
+[Python 机器学习 - 预测分析核心算法(3)](http://crazydogs.github.io/coding/2017/02/24/python-%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-3.html)
+
+## 第五章 使用惩罚线性方法构建预测模型
+
+### 惩罚线性回归的 Python 包
+sklearn 中已经实现了套索、LARS(最小角度回归)、使用 ElasticNet 乘法的共轭梯度下降方法。
+
+### 在数字数据上使用套索回归
+1. 先对数据进行归一化处理，否则会导致系数尺度间很大的差异
+2. 分离属性和标签
+3. 使用 sklearn.linear\_model.LassoCV 根据数据训练模型，使用方法像这样
+    `LassoCV(cv=10).fit(X, Y)`，其中 cv 是折数，x 是属性矩阵，y 是标签向量
+
+具体代码可以参考[这里](https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/sklearnLassoCV.py)。其中还使用了 linear\_model.lasso\_path，可以看到训练过程中，
+随 alpha 变化是，参数取值的变化。
+
+### 使用惩罚线性回归解决二分类问题
+1. 将分类标签的两个值转化为数值，一个为 0，一个为 1，之后才可以使用线性算法。
+
+具体代码可以参考[这里](https://github.com/Crazydogs/python_machine_learning_example/blob/master/rock/enetRegCv.py)
+步骤在注释都有解释
+
+其中 ElasticNetCV 的使用方法可以参考 [sklearn 的文档](http://scikit-learn.org/stable/modules/generated/sklearn.linear_model.ElasticNetCV.html)
+
+### 使用线性回归的方法解决多分类问题
+1. 针对每一个标签生成一个要预测的标签向量。
+2. 训练多个分类器
