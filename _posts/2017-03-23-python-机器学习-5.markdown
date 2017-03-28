@@ -76,4 +76,37 @@ category: coding
 
 具体代码可以参照 [这里](https://github.com/Crazydogs/python_machine_learning_example/blob/master/gradientBoosting.py)
 
+### 随机森林
+随机森林其实是在自举方法基础上的一种抽样方法。随机森林须要进行行采样和列采样。
 
+对于行采样，采用有放回的方式，跟自举是一样的。
+然后在每次对决策树进行分裂的时候，在多个属性中随机抽取几个属性，只用少数的几个属性进行训练。
+
+## 第七章 使用 Python 构建集成模型
+
+### 使用随机森林算法
+sklearn 中的 ensemble.RandomForestRegressor 可以方便地进行随机森林模型构建。
+构造函数中比较重要的参数有
+- *n_estimators* 指定集成方法中的决策树数量
+- *max_depth* 决策树的最大深度
+- *min\_sample\_split* 每个叶子节点至少须要包含的实例数量
+- *max\_features* 每次抽取的属性数量
+- *random\_state* 随机种子
+
+具体的代码例子可以参考 [这里]('https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/randomForest.py')
+
+### 使用梯度提升算法
+sklearn 中的 ensemble.GradientBoostingRegressor 可以方便地进行梯度提升模型的构建
+构造函数中比较重要的参数有
+- *loss* 损失函数
+- *learning_rate* 沿梯度方向下降的步长
+- *n_estimators* 训练树的数量
+- *subsample* 梯度提升过程中，对数据进行抽样，变成随机梯度提升
+- *max_depth* 单个决策树的最大深度
+- *max_features* 和随机森林中的参数作用相同，在梯度提升过程中，选择部分的属性进行训练
+
+在训练过程中，如果测试数据的性能在图右侧迅速提高， 增加 n\_estimators 或者 learning_rate
+如果在右侧性能迅速恶化，则减少 learning_rate
+如果在右侧基本持平，可以尝试增加 max\_depth 和 max\_features
+
+具体的代码例子可以参考 [这里]('https://github.com/Crazydogs/python_machine_learning_example/blob/master/wine/gradientBoosting.py')
