@@ -5,6 +5,8 @@ date:   2016-11-04 16:09:00
 category: coding
 ---
 
+PS: 后来发现这方法实在太蠢了，还是 awk 靠谱，具体戳[这里](http://crazydogs.github.io/coding/2017/04/03/%E4%B8%8A%E5%8F%A4%E7%A5%9E%E5%99%A8awk.html)
+
 接到一个日志回收记录的活，本来想着用 node 或者 python 快速搞定就好了，
 结果线上机居然啥都没有，看来只能用 shell 了，正巧之前都没怎么写过太复杂的 shell，
 刚好练下手。
