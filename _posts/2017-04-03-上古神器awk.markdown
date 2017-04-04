@@ -1,0 +1,150 @@
+---
+layout: post
+title:  "上古神器awk"
+date:   2017-04-03 16:44:10
+category: coding
+---
+
+参考文档 [The GNU Awk User’s Guide](http://www.gnu.org/software/gawk/manual/gawk.html)
+
+之前在一个面试里面被问到 awk 相关的问题，没答上来。平时这种文本分析的事情，
+都是拿 Node 或者 Python 做的，对这种系统工具还是用得太少。
+
+在 man 的说明里面，awk 的描述是 "pattern-directed scanning and processing language"。
+光看这个描述根本不知道是什么东西，直接看几个例子吧。
+
+比如一个 netstat 命令的输出太长了，我们只想关注 tpc 网络连接，那可以使用
+
+````
+netstat | awk '/tcp/'
+````
+其中 _/tcp/_ 是正则模式匹配，通常情况下，可以过滤出来我们想要的信息，
+但有时候可能会有别的东西混进来，比如这样
+
+````
+liuyueming$ netstat | awk '/tcp/'
+tcp4       0      0  192.168.1.5.63139      tg-in-f101.1e100.https SYN\_SENT   
+...... ......
+tcp4       0      0  localhost.socks        localhost.64609        ESTABLISHED
+tcp4       0      0  localhost.64609        localhost.socks        ESTABLISHED
+       b        5        0     8192     2048 com.apple.network.tcp_ccdebug 
+````
+
+在最后一行中，意外地把包含 'tcp' 子串的地址筛选了进来。那我们还是换种方式好了。
+
+````
+netstat | awk '{if ($1 ~ /tcp/) print $0}'
+````
+
+这样 _/tcp/_ 这个模式匹配只对第一列起作用了。
+
+上面两个例子还只是很简单的 awk 脚本，使用 grep 也能很简单地做到，但实际上 awk
+的功能是很强大的。对 awk 的描述是文本扫描和加工的语言，所以其实 awk 是一个解释器，
+能够各种复杂的操作。
+
+简单的 awk 可以在命令行里面直接执行，如果是复杂的操作，还是使用文件来存储脚本更合理一些。
+举个老掉牙的例子吧，假设我们有张成绩单，格式是这样的
+
+````
+Id  Name        Sex Score                                                          
+1   studentA    M   81                                                             
+2   studentB    F   93                                                             
+3   studentC    F   77                                                             
+4   studentD    M   85
+````
+
+针对这些数据须要进行一些统计和筛选工作。先求一下平均分吧，建立一个文件 average.awk
+
+{% highlight awk %}
+#! /usr/bin/awk -f                                                                 
+                                                                                   
+BEGIN {                                                                            
+    sum = 0                                                                        
+    num = 0                                                                        
+}                                                                                  
+NR != 1 {                                                                          
+    sum += $4                                                                      
+    num += 1                                                                       
+}                                                                                  
+END {                                                                              
+    printf "The average score is: %.2f\n", (sum / num)                               
+} 
+{% endhighlight %}
+
+然后用使用 _chmod +x average.awk_ 赋予其执行权限。现在就可以这样直接调用了
+_./average.awk test.txt_ 正常的话应该会在 shell 中输出 84.00 的平均分。
+
+第一行，是指定 awk 解释器的位置(也有可能位于/bin/awk)。看下面的代码之前先解释一下
+awk 的基本原理——按行来对数据进行处理。处理过程可以定义两个要素，pattern(模式)
+和 action(操作)，其中 action 被包括在话括号中。两个要素可以不全都定义，但至少须要定义一个。
+如果省略 action，那就像上文中第一个 tcp 的例子一样，默认的 action 就是打印整行，
+如果省略 pattern，那么就像第二个 tcp 例子，对每一行都执行操作。
+
+BEGIN 和 END 是两个特殊的模式，分别是在执行开始前和结束后进行相应的操作。
+可以看到，awk 脚本是支持在操作中定义和使用变量的。至于输出语句 printf，跟 c
+语言并没有什么差别。
+
+主要对每行数据进行的代码还是在中间部分。可以看到这一部分的模式是 _NR != 1_，
+其中 NR 是 awk 的内置变量，表示当前行数。这个模式主要用于排除第一行的表头。
+之后对没一行进行简单的累加操作，其中 $4 也是 awk 的内置变量，标识根据分隔符分隔的第四列数据。
+
+在同一个 awk 脚本中，其实可以添加多个这种 pattern-action 语句，比如我们在文件中再加点代码
+
+{% highlight awk %}
+#! /usr/bin/awk -f
+
+BEGIN {
+    sum = 0
+    num = 0
+    maleSum = 0
+    femaleSum = 0
+    maleNum = 0
+}
+NR != 1 {
+    sum += $4
+    num += 1
+}
+{
+    if ($3 == "M") {
+        maleSum += $4
+        maleNum += 1
+    }
+    else
+        femaleSum += $4
+}
+END {
+    printf "The average score is: %.2f\n", (sum / num)
+    printf "The average score of boys is: %.2f\n", (maleSum / maleNum)
+    printf "The average score of girls is: %.2f\n", (femaleSum / (num - maleNum))
+}
+{% endhighlight %}
+
+当然这一段操作也可以直接写在 _NR != 1_ 那个语句里面，这里只是演示一下可以在一个脚本中，
+使用多个 pattern-action 语句。在一个 action 中，可以放置一系列的语句，
+语句除了是简单的计算、赋值、表达式之外还可以是分支、循环等复杂的结构，
+具体如下所示：
+
+````
+    if( expression ) statement [ else statement ]
+    while( expression ) statement
+    for( expression ; expression ; expression ) statement
+    for( var in array ) statement
+    do statement while( expression )
+    break
+    continue
+    { [ statement ... ] }
+    expression              # commonly var = expression
+    print [ expression-list ] [ > expression ]
+    printf format [ , expression-list ] [ > expression ]
+    return [ expression ]
+    next                    # skip remaining patterns on this input line
+    nextfile                # skip rest of this file, open next, start at top
+    delete array[ expression ]# delete an array element
+    delete array            # delete all elements of array
+    exit [ expression ]     # exit immediately; status is expression
+````
+
+除此之外，awk 还内置了许多的变量和内建函数，如 _substr_, _split_, _sin_, _cos_
+等等，具体的还是查阅手册吧。
+
+总之，awk 非常适合对以行为单位，使用统一分隔符分隔列的文本进行处理，还是要学习一个。
