@@ -1,0 +1,172 @@
+---
+layout: post
+title:  "chrome 扩展开发"
+date:   2017-04-08 01:55:00
+category: coding
+---
+
+最近上 BiliBili 有点多，有时候真的感觉摸鱼摸爆，但又不知道摸了多久，果然还是须要统计一下。
+之前没写过 chrome 的扩展，听说其实就是一个 html 页面，应该不难搞，刚好试一下。
+
+## chrome 扩展是什么
+
+在 [扩展程序页面](chrome://extensions/) 可以管理我们的 chrome 扩展。列表展示了一些扩展的基本信息，
+名称、描述、权限等等。
+
+但有一个很奇怪的按钮，叫『检查视图』，后面通常跟着一个叫『背景页』或者『background.html』的东西。
+点击这个按钮就可以看到插件的后台页面代码了，通常来说插件的主要逻辑都会在这个页面中处理(当然根据扩展的功能不同，
+也有主体逻辑在其他地方的插件)，所以 chrome 扩展插件其实就是一个常驻 chrome 后台的页面而已。
+
+除了这个后台页面之外，还有些其他东西。先看一个简单的 [示例插件](https://github.com/Crazydogs/How-many-time-I-waste-on-bilibili)。
+
+## 配置文件
+
+首先就是配置文件，在插件的根目录下，都应该有一个名为 manifest.json 的配置文件，配置插件的基础属性，权限申请，资源路径等数据。
+上面这个插件的配置文件大概配置了这些内容
+
+{% highlight javascript %}
+{
+    "name": "How Many Time I Waste on Bilibili",
+    "manifest_version": 2,
+    "version": "1.0",
+    "description": "How many time I waste on Bilibili",
+    "icons": {
+        "16": "icon.png"    // 特定尺寸的插件图标
+    },
+    "browser_action": {     // 配置浏览器工具栏上图标的行为
+        "default_icon": "icon.png",
+        "default_title": "统计",
+        "default_popup": "pop.html"     // 点击插件图标时弹出的页面
+    },
+    "background": {         // 后台运行页面
+        "scripts": ["background.js"]
+    },
+    "content_scripts": [    // 在普通页面中植入的代码
+        {
+            "js": ["content.js"],
+            // 仅在目标页面中植入代码
+            "matches": ["http://*.bilibili.com/*"],
+            // 代码执行时机
+            "run_at": "document_start"
+        }
+    ],
+    "permissions": [
+        "tabs"  // 插件须要的权限
+    ]
+}
+{% endhighlight %}
+
+这个插件的功能很简单，就是统计我每天在 BiliBili 上面摸鱼摸了多久，为了做到这一点，至少须要做三个微小的工作
+
+1. 在我访问 bilibili 的时候，进行计时
+2. 统计各个 bilibili 窗口的访问事件，并保证不会重复计时
+3. 展示统计的数据
+
+这三个功能分布在三个页面里面来完成，首先是计时功能。
+
+## content script
+
+插件配置中有一项是 **content\_script**，用来设置嵌入普通页面中的代码。**content\_script**
+中的代码和普通的 js 代码并没有什么区别，和被嵌入的页面中的代码运行在同一个全局对象下面，也可以自由地访问
+DOM 之类的页面资源。
+
+在这个插件中，我们在每个 bilibili 的页面中要做的就是计时，非常简单，代码大概是这样，只是定时地发消息。
+
+{% highlight javascript %}
+(function() {
+    setInterval(function() {
+        chrome.runtime.sendMessage({
+            type: 'add time',
+            url: window.location.href
+        });
+    }, 1000);
+})();
+{% endhighlight %}
+
+至于页面之间的通信机制，后面再讲。
+
+## background script
+
+有了发出计时心跳消息的页面，下一步就是统计页面了，也就是常驻 chrome 后台的 background 页面。
+对应配置文件中的 **background** 配置项。这个页面只要浏览器开着，就会一直运行，可以用来汇总各个 tab
+报上来的数据，代码核心部分大概是这样。
+
+{% highlight javascript %}
+(function() {
+    let counter = 0;
+    let delay = false;
+    chrome.extension.onMessage.addListener(function msgListener(req, sender, res) {
+        if (req.type == 'add time') {
+            countTime();
+        }
+    });
+    function countTime() {
+        if (delay) return;
+        counter += 1;
+        // 缓冲一下
+        delay = true;
+        setTimeout(function() {
+            delay = false;
+        }, 1000);
+    }
+{% endhighlight %}
+
+简单来说就是对各个 tab 发送过来的心跳包进行累加，顺便做一点缓冲，防止开多个页面的时候重复计时。
+
+从 content 页面和 background 页面的代码中，已经可以看出页面最简单的通信机制了，
+就是发消息，让通过 chrome 进行转发。
+
+## popup page
+
+统计工作做完之后，下一步就是制作展示统计数据的页面了。在这个插件中，我们使用的是插件的弹出窗口来进行数据展示
+（当然还有其他的方法，比如新开一个窗口啊，新开一个 tab 之类的）。弹出窗口是通过配置文件中的 **browser_action**
+项来配置的，其实也是一个很普通的 html 页面，也可以引用 js。我们通过向 background 页面发送消息来请求统计数据。
+代码如下
+
+HTML 代码
+
+{% highlight html %}
+        <h1>今天又在 Bilibili 荒废了多久？</h1>
+        <p>
+            <span id="hours">0</span>小时
+            <span id="minute">0</span>分钟
+            <span id="second">0</span>秒
+        </p>
+{% endhighlight %}
+
+引用的 JS
+
+{% highlight javascript %}
+    setInterval(function interval(params) {
+        chrome.runtime.sendMessage({
+            type: 'get time'
+        }, function (res) {
+            let time = res.time;
+            let elH = document.querySelector('#hours');
+            let elM = document.querySelector('#minute');
+            let elS = document.querySelector('#second');
+            elH.innerHTML = Math.floor(time / 3600);
+            time = time % 3600;
+            elM.innerHTML = Math.floor(time / 60);
+            time = time % 60;
+            elS.innerHTML = time;
+        });
+    }, 200);
+{% endhighlight %}
+
+当然 background 中也要加入对请求数据消息的响应
+
+{% highlight javascript %}
+    chrome.extension.onMessage.addListener(function msgListener(req, sender, res) {
+        if (req.type == 'add time') {
+            countTime();
+        } else if (req.type == 'get time) {
+            res({time: counter});
+        }
+    });
+{% endhighlight %}
+
+这样子基本的功能就已经开发完了，可以试一下运行效果了。
+
+chrome 的开发者文档看起来就是没有 MDN 的看起来这么爽。写文档果然也是一门技术活，就条理清晰这个要求，
+也不是很容易做到的。
