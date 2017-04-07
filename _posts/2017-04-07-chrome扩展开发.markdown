@@ -160,7 +160,7 @@ HTML 代码
     chrome.extension.onMessage.addListener(function msgListener(req, sender, res) {
         if (req.type == 'add time') {
             countTime();
-        } else if (req.type == 'get time) {
+        } else if (req.type == 'get time') {
             res({time: counter});
         }
     });
