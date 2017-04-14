@@ -1,0 +1,140 @@
+---
+layout: post
+title:  "chrome 扩展开发(2)"
+date:   2017-04-13 22:13:00
+category: coding
+---
+
+上一篇: [chrome 扩展开发](http://crazydogs.github.io/coding/2017/04/08/chrome%E6%89%A9%E5%B1%95%E5%BC%80%E5%8F%91.html)
+
+## 书接上回
+
+上一篇大概介绍了 chrome 扩展的基本机制。基本上就是 3 个部分(还有一些其他的，
+chrome 开放能力相关的页面，就先不讲了)
+
+1. 一个后台常驻的页面，类似于本地的 server
+2. content 页面，可以插入到普通网页中执行的代码，有页面内嵌代码的权限。
+3. popup 页面，点击插件按钮弹出的弹层，可以提供一些交互和展示功能。
+
+举例的插件原理很简单，content 页面上报数据，background 统计，popup 负责展示结果。
+但是如果真的像上一篇所讲的那样写，那使用这个时间统计插件的时候，就会发现一些问题。
+那就是计时是会有很大的误差（取决于你的浏览器有多卡，我的 chrome 一分钟下来能差
+5 秒左右）。
+
+## 通信机制
+
+问题其实就出在统计时使用的通信机制上。要统计特定页面打开的时间，如果不能获取其关闭时间，
+那就只能采用发心跳包的方式。像之前那种方法，其实是很不靠谱的，因为 js 的定时器，
+并不能保证时间周期的严格准确，而 background 页面又根据心跳包来进行统计，
+自然会出现偏差。
+
+当然，使用心跳的方式，也可以做好这件事情。只是 background 页面中须要加入一些额外的逻辑，
+总体来说还是去重，对每个页面维持一个类似长连接的结构，设置心跳的过期时间，
+再考虑上一些后台页面被挂起的边界情况之类的，应该也是 OK 的。
+
+但其实是不用我们自己维持这样的长连接结构的，Chrome 26 之后的版本中，都提供了官方的长连接机制，
+Chrome 官方文档可以参考[这里](https://developer.chrome.com/extensions)
+
+PS: 看惯了 MDN 的文档之后，不得不吐槽 chrome 这个文档，搜索和目录都做得特别差。
+这时候切实体验到了 typescript 的优势，types/chrome 的描述文档用起来都比官方文档方便。
+
+创建连接的方法如下
+
+{% highlight typescript %}
+    // 在 content 页面中
+    let connectPort = chrome.runtime.connect({
+        'name': 'connect name'
+    });
+    connectPort.postMessage({
+        // 发送的信息
+    });
+{% endhighlight %}
+
+{% highlight typescript %}
+    // 在 background 页面中
+    chrome.runtime.onConnect.addListener((externalPort) => {
+
+        // ...
+        // 在建立连接时执行的代码
+        // ...
+
+        externalPort.onMessage.addListener((port) => {
+            // 收到消息时执行的代码
+        });
+        externalPort.onDisconnect.addListener((port) => {
+            // 在断开连接是执行的代码
+        });
+    });
+{% endhighlight %}
+
+这样即使我们没有关闭页面的事件，也可以简单地使用 connection 的 disconnect 事件来代替。
+
+## 时间统计
+
+使用这样的通信机制之后，在 background 统计时间的方法就很简单了。只要记录每个页面连接的起始时间，
+还有断开连接的时间，就可以了。当然为了同时打开多个页面的时候不重复计算，须要做一点点去重处理。
+大概是这样
+
+background 页面
+
+{% highlight typescript %}
+    /** 当天累计已稳定时间 */
+    let totalTime: number = 0;
+    /** 开始计时时间 */
+    let startTime: number = 0;
+    // 处理页面链接
+    chrome.runtime.onConnect.addListener((externalPort) => {
+        // 记录页面连接
+        connectionList[String(externalPort.sender.tab.id)]  = {
+            startTime: Number(externalPort.name),
+            url: externalPort.sender.tab.url,
+            title: externalPort.sender.tab.title
+        };
+        // 设定本段计时开始时间
+        if (!startTime) {
+            startTime = Number(externalPort.name);
+        }
+
+        // 断开连接
+        externalPort.onDisconnect.addListener((port) => {
+            delete connectionList[port.sender.tab.id];
+            if (!Object.keys(connectionList).length) {
+                // 没有活动的连接了
+                totalTime += new Date().getTime() - startTime;
+                startTime = 0;
+            }
+        });
+    });
+    // 页面输出
+    chrome.runtime.onMessage.addListener(function msgListener(req, sender, res) {
+        if (req.type == 'get time') {
+            let exTime = startTime ? new Date().getTime() - startTime : 0;
+            // 输出当天累计时间
+            res({
+                // 累积时间加当前还活跃的连接时间
+                time: (totalTime + exTime) / 1000,
+            });
+        }
+    });
+{% endhighlight %}
+
+content 页面
+
+{% highlight typescript %}
+    let startTime: number = new Date().getTime();
+    let connectPort = chrome.runtime.connect({
+        'name': String(startTime)
+    });
+{% endhighlight %}
+
+具体可以看[这里](https://github.com/Crazydogs/How-many-time-I-waste-on-bilibili)，
+额外加了历史纪录，按天切分时间统计之类的一些小逻辑
+
+## Summary
+
+这次试着用 TypeScript 和 VSCode 开发，感觉真是爽到啊。完美从vim 切换过来了，
+除了折叠功能不是很正常之类的几个小问题，总体来说比用 ctag 和Ctr-n 的方式方便很多。
+特别是像这种三方库的文档功能和只能提示，体验很棒。
+
+果然前端的工程化还差得远啊，还是微软搞的牛逼，语法分析确实才是更进一步的基础，
+单纯地拼接文件来实现的模块化，还是太简陋了。
