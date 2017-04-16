@@ -11,7 +11,7 @@ CSS 中的 transform 属性，主要用于对元素添加一个变形。可以�
 最后加的一层，并不会对文本流产生任何的影响，其实与 position: relative 的效果一样，
 不过不用占用 position 这么重要的一个属性，可以做的变换也不只是平移。
 
-先说 2D 的变换，不涉及 3D。transform 能做的变换有这几种 [demo](http://baidu.com)，
+先说 2D 的变换，不涉及 3D。transform 能做的变换有这几种 [demo](http://crazydogs.github.io/staticpage/css_transform_demo1.html)，
 分别是缩放、斜切、旋转、平移，以及他们的组合，其中前三个是线性变换。但如果查一下手册，
 就会发现，2D 变换中还有一个叫 matrix 的带六个参数的变换。其实平时很少会直接用到 matrix
 变换，但对于理解 transform 属性至关重要
