@@ -5,6 +5,47 @@
     <title></title>
 </head>
 <body>
-    test
+    <style>
+    .contentbox {
+        width: 600px;
+        height: 200px;
+        margin: 40px 30px;
+    }
+    .contentbox div {
+        display: inline-block;
+        width: 200px;
+        height: 200px;
+        background: #ddd;
+        margin-right: 50px;
+    }
+    #box1 .right {
+        transform: scale(0.5, 1);
+    }
+    #box2 .right {
+        transform: skew(20deg);
+    }
+    #box3 .right {
+        transform: rotate(20deg);
+    }
+    #box4 .right {
+        transform: translate(20px, -10px);
+    }
+    </style>
+    <div id="box1" class="contentbox">
+        <div class="left"></div>
+        <div class="right"></div>
+    </div>
+    <div id="box2" class="contentbox">
+        <div class="left"></div>
+        <div class="right"></div>
+    </div>
+    <div id="box3" class="contentbox">
+        <div class="left"></div>
+        <div class="right"></div>
+    </div>
+    <div id="box4" class="contentbox">
+        <div class="left"></div>
+        <div class="right"></div>
+    </div>
 </body>
 </html>
