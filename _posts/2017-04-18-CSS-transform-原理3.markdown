@@ -78,7 +78,6 @@ category: coding
     ... 
 </style>
 <div id="clock">
-
     <div class="clock-number">12</div>
     <div class="clock-number">1</div>
     <div class="clock-number">2</div>
@@ -91,8 +90,115 @@ category: coding
 具体可以看 [demo 页面](http://crazydogs.github.io/staticpage/css_transform_clock_1.html)
 效果大概是这样
 
-![transform\_origin demo](http://crazydogs.github.io/images/css_transform_clock_1.png)
+![transform\_origin demo1](http://crazydogs.github.io/images/css_transform_clock_1.png)
 
-但是这样还没有达到我们的要求，我们期望的效果是这样
+但是这样还没有达到我们的要求，如果是罗马数字的话还好，但阿拉伯数字通常文字都会保持向上的方向
+，我们期望的效果是这样。
 
+![transform\_origin demo2](http://crazydogs.github.io/images/css_transform_clock_2.png)
 
+那其实也很简单，做一些小修改
+
+{% highlight html %}
+<style>
+    #clock {
+        width: 400px;
+        height: 400px;
+        border: 2px solid #ddd;
+        border-radius: 50%;
+        position: relative;
+    }
+    .clock-number {
+        position: absolute;
+        width: 100%;
+        height: 40px;
+        font-size: 30px;
+        text-align: center;
+        transform-origin: center 200px;
+    }
+    .clock-number span {
+        display: block;
+    }
+    .clock-number:nth-child(2) {
+        transform: rotate(30deg);
+    }
+    .clock-number:nth-child(2) span {
+        transform: rotate(-30deg);
+    }
+    ...
+</style>
+<div id="clock">
+    <div class="clock-number"><span>12</span></div>
+    <div class="clock-number"><span>1</span></div>
+    ...
+</div>
+{% endhighlight %}
+
+具体代码可以看 [demo 页面](http://crazydogs.github.io/staticpage/css_transform_clock_2.html)，
+很简单地就解决了这个问题。
+
+但是有没有更好的方法呢，毕竟这种方案须要修改页面的 DOM 结构，成本比较高，而且元素多了，
+对渲染来说也增加了计算量(特别是当大量元素须要这种多重的变换时)。
+
+上一期最后讲到了变换合并的内容，那能不能把这两个变换合并，单纯用一个元素做出等价的效果呢。
+如果是单纯地合并的话，有一个东西就很麻烦了，那就是变换原点。对于任一个数字来说，须要进行两个方向相反，
+角度相同的旋转，这两个旋转操作的原点并不相同，一个是表盘的中心，一个是数字的中心。
+而 transform-origin 并不像 tranform 属性一样，支持多个值，一个元素就只有一个
+transform-origin 怎么办呢。
+
+本文第一部分中提到说 transform-origin 和 transform: translate 其实是很像的，
+那能不能用 translate 来代替 transform-origin 来改变变换的原点的。
+
+还是先考虑最上面提到的正方形缩放的例子。蓝色和红色的正方形之间，差了一些距离，
+很容易发现，这段距离其实就是两个变换不同的变换原点之间的距离。那就是说，
+如果能找到方法，弥补这段距离，那就可以用平移来实现原点的辩护按了(其实，
+仔细想想，就会发现原点的变换就是平移)。
+
+回头看看正方形缩放的代码，其实等价于这样
+
+{% highlight css %}
+.div1 {
+    transform-origin: 100px 100px;
+    transform: scale(0.5, 0.5);
+}
+.div2 {
+    transform-origin: 0 200px;
+    transform: scale(0.5, 0.5);
+}
+{% endhighlight %}
+
+div1 的样式没有指定变换原点，默认值为中心点，在这个例子中就是 **100px 100px**。
+div2 的样式指定了变换原点为 left bottom，也就是相当于 **0 200px**。
+我们对样式稍加改动变成这样
+
+{% highlight css %}
+div {
+    transform-origin: 0 0;
+}
+.div1 {
+    transform: scale(0.5, 0.5) translate(100px, 100px);
+    background: rgba(0, 0, 255, 0.5);
+}
+.div2 {
+    transform: scale(0.5, 0.5) translate(0, 200px);
+    background: rgba(255, 0, 0, 0.5);
+}
+{% endhighlight %}
+
+就会发现，我们锁定 transform-origin 为元素的左上角的同时，
+可以通过一个 translate 的效果来模拟不同原点的变换。Good，
+似乎找到方法了，我们把它用到刚刚的表盘例子中
+
+{% highlight css %}
+.clock-number:nth-child(2) {
+    transform-origin: 0 0;
+    transform: rotate(30deg) translate(200px 200px);
+}
+{% endhighlight %}
+
+就会发现，不好使呀，怎么跑到了一个奇怪的地方 = =，大概是这样
+
+![transform\_origin demo3](http://crazydogs.github.io/images/css_transform_clock_3.png)
+
+看来靠瞎猜还是不行的，我们须要真正弄明白 origin 和 translate 之间的关系。
+还是那句话，欢迎期待下一期。
