@@ -100,3 +100,5 @@ div {
 这些东西实际上确实不会用到，但不要着急，请期待下一期。
 
 [CSS transform 的基本原理(2)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%862.html)
+
+[CSS transform 的基本原理(3)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%863.html)

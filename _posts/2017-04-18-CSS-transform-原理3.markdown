@@ -6,6 +6,7 @@ category: coding
 ---
 
 [CSS transform 的基本原理(1)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%86.html)
+
 [CSS transform 的基本原理(2)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%862.html)
 
 ## transform-origin
@@ -27,7 +28,7 @@ category: coding
 
 具体的区别大概是这样
 
-![transform\_origin demo](http://crazydogs.github.io/images/css_transform_origin.png)
+![transform origin demo](http://crazydogs.github.io/images/css_transform_origin.png)
 
 其中灰色的是变换前的正方形，蓝色的是 div1，红色的是 div2。也可以直接看这个
 [demo](http://crazydogs.github.io/staticpage/css_transform_demo2.html)
@@ -90,12 +91,12 @@ category: coding
 具体可以看 [demo 页面](http://crazydogs.github.io/staticpage/css_transform_clock_1.html)
 效果大概是这样
 
-![transform\_origin demo1](http://crazydogs.github.io/images/css_transform_clock_1.png)
+![transform origin demo1](http://crazydogs.github.io/images/css_transform_clock_1.png)
 
 但是这样还没有达到我们的要求，如果是罗马数字的话还好，但阿拉伯数字通常文字都会保持向上的方向
 ，我们期望的效果是这样。
 
-![transform\_origin demo2](http://crazydogs.github.io/images/css_transform_clock_2.png)
+![transform origin demo2](http://crazydogs.github.io/images/css_transform_clock_2.png)
 
 那其实也很简单，做一些小修改
 
@@ -198,7 +199,7 @@ div {
 
 就会发现，不好使呀，怎么跑到了一个奇怪的地方 = =，大概是这样
 
-![transform\_origin demo3](http://crazydogs.github.io/images/css_transform_clock_3.png)
+![transform origin demo3](http://crazydogs.github.io/images/css_transform_clock_3.png)
 
 看来靠瞎猜还是不行的，我们须要真正弄明白 origin 和 translate 之间的关系。
 还是那句话，欢迎期待下一期。
