@@ -91,5 +91,5 @@ category: coding
 可以注意到，我们连着使用了两次上面提到的技巧，完成了两次原点不同的旋转操作。
 停下来认真思考一下，是什么确保了这个技巧可以重复使用的。
 
-接下来，我们还可以更进一步，想象一下，像这样一个 [demo]() 应该如何实现，
-才算是比较优雅呢。
+接下来，我们还可以更进一步，想象一下，像这样一个 [demo](http://crazydogs.github.io/staticpage/css_transform_solarsystem.html)
+应该如何实现，才算是比较优雅呢。
