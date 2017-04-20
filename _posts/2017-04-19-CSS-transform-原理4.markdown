@@ -93,3 +93,11 @@ category: coding
 
 接下来，我们还可以更进一步，想象一下，像这样一个 [demo](http://crazydogs.github.io/staticpage/css_transform_solarsystem.html)
 应该如何实现，才算是比较优雅呢。
+
+## Summary
+
+下一期就是最后一期了，第一次写这么长篇的文章。果然要把一件事情讲清楚并不简单，
+写出来还是很考验功力的。要有扎实的基础和系统的认识，才能写得比较好吧，
+感觉自己还差些火候。
+
+还是期待下一期吧。
