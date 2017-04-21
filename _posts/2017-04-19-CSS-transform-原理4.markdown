@@ -7,7 +7,7 @@ category: coding
 
 - [CSS transform 的基本原理(1)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%86.html)
 - [CSS transform 的基本原理(2)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%862.html)
-- [CSS transform 的基本原理(3)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%863.html)
+- [CSS transform 的基本原理(3)](http://crazydogs.github.io/coding/2017/04/18/CSS-transform-%E5%8E%9F%E7%90%863.html)
 
 ## transform-origin 与 translate
 
@@ -103,4 +103,4 @@ skew 斜切变换来进行平移操作，所以平移也并不会改变元素与
 
 还是期待下一期吧。
 
-- [CSS transform 的基本原理(5)](http://crazydogs.github.io/coding/2017/04/19/CSS-transform-%E5%8E%9F%E7%90%865.html)
+- [CSS transform 的基本原理(5)](http://crazydogs.github.io/coding/2017/04/20/CSS-transform-%E5%8E%9F%E7%90%865.html)

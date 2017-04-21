@@ -7,7 +7,7 @@ category: coding
 
 - [CSS transform 的基本原理(1)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%86.html)
 - [CSS transform 的基本原理(2)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%862.html)
-- [CSS transform 的基本原理(3)](http://crazydogs.github.io/coding/2017/04/15/CSS-transform-%E5%8E%9F%E7%90%863.html)
+- [CSS transform 的基本原理(3)](http://crazydogs.github.io/coding/2017/04/18/CSS-transform-%E5%8E%9F%E7%90%863.html)
 - [CSS transform 的基本原理(4)](http://crazydogs.github.io/coding/2017/04/19/CSS-transform-%E5%8E%9F%E7%90%864.html)
 
 ## 从 2D 到 3D
