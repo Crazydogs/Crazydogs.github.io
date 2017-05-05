@@ -1,0 +1,125 @@
+---
+layout: post
+title:  "概率编程与贝叶斯推断(2)"
+date:   2017-05-05 16:44:10
+category: coding
+---
+
+上一期
+[概率编程与贝叶斯推断(1)](http://crazydogs.github.io/coding/2017/04/30/%E6%A6%82%E7%8E%87%E7%BC%96%E7%A8%8B%E4%B8%8E%E8%B4%9D%E5%8F%B6%E6%96%AF%E6%8E%A8%E6%96%AD1.html)
+讲了很多概率相关的基础知识，后面使用相关的工具的时候，更容易理解其原理。
+
+## PyMc
+
+PyMc 是一个做贝叶斯分析常用到的 Python 库。安装的话，如果有 pip 之类的包安装工具，
+直接执行
+
+{% highlight shell %}
+pip install pymc
+{% endhighlight %}
+
+如果能成功安装，是最简单的。不过还是有可能碰到很多问题，具体可以参考本文最后一部分。
+
+## PyMc 中的变量
+
+PyMc 中的变量，分为两种，随机型变量和确定型变量。此部分内容可以参考
+[这里的代码](https://github.com/Crazydogs/bayesian-methods-for-probabilistic-progranmming-and-bayesian-inference-example/blob/master/deterministic.py)
+
+上一期中介绍了些简单的随机变量的分布。在 PyMc 中可以很方便地构造具有某些常见分布的随机变量。
+比如说可以通过下面这一行代码，构造一个服从帕松分布的随机变量，其期望为 1。
+
+{% highlight python %}
+import pymc as pm
+
+random\_value = pm.Poisson('random\_value', 3)
+print 'random\_value: ', random\_value.value
+{% endhighlight %}
+
+随机变量的值是不确定的，可以通过 访问其 value 属性检查他的当前值。还可以通过调用
+random 方法，生成一个新的值。
+
+而确定型变量，就是与随机变量相对的概念。确定型变量所需的参数完全确定的时候，
+它的值就是确定的。可以通过以下这种方式生成一个确定型变量
+
+{% highlight python %}
+@pm.deterministic
+def deterministic\_value(par\_1=random\_value)
+    return par_1 + 10
+print 'deterministic\_value: ', deterministic\_value.value
+
+for i in range(2):
+    print 'call random\_value.random()'
+    random\_value.random()
+    print 'random\_value: ', random\_value.value
+    print 'deterministic\_value: ', deterministic\_value.value
+
+# 输出
+# random\_value:  2
+# deterministic\_value:  102
+# call random\_value.random()
+# random\_value:  3
+# deterministic\_value:  103
+# call random\_value.random()
+# random\_value:  1
+# deterministic\_value:  101
+{% endhighlight %}
+
+可以看到，当 random\_value 调用 random() 方法，获取一个新的值的时候，
+deterministic\_value 也随着一起更新了。这涉及到了 PyMc 中的父子变量的概念。
+
+PyMc 中的父变量是对其他变量有影响的变量，子变量是会被其他变量影响的变量。
+可以通过访问 PyMc 变量的 parents 和 children 属性来访问一个变量的父变量和子变量。
+具体如下
+
+{% highlight python %}
+print 'deterministic\_value\'s parents: ', deterministic\_value.parents
+print 'random\_value\'s children: ', random\_value.children
+
+# 输出
+# deterministic\_value's parents:  {'par\_1': <pymc.distributions.Poisson 'random_value' at 0x109740a50>}
+# random\_value's children:  set([<pymc.PyMCObjects.Deterministic 'deterministic_value' at 0x109740b10>])
+{% endhighlight %}
+
+当然像这么简单的依赖关系，是可以不需要用到 @pm.deterministic 修饰符，还用一个函数来表达。
+直接使用这样简单的表达式也可以。
+
+{% highlight python %}
+simpleDeterministic = random\_value + 50
+print 'simpleDeterministic\'s parents: ', simpleDeterministic.parents
+print 'simpleDeterministic: ', simpleDeterministic.value
+
+# 输出
+# simpleDeterministic's parents:  {'a': <pymc.distributions.Poisson 'random_value' at 0x109740a50>, 'b': 50}
+# simpleDeterministic:  51
+{% endhighlight %}
+
+## 建立模型
+
+
+## PS: PyMc 安装问题
+
+本来这一篇早就应该发出来了，但没想到在安装环节卡了好几天都没弄好。首先是第一个问题，
+使用 pip 安装 pymc 的时候，总是连接超时，下不来包。
+
+有几种解决方式，比较简单的是在使用 pip install 命令的时候加上 tiemout 参数，
+将超时时间加长一些，一般来说的 OK 的。更好的方式是使用国内的镜像，具体可以参考
+[这里](https://segmentfault.com/q/1010000000162410) 但可能公司的网络比较抽风吧，
+对我好像都没啥效果(不过过了两天又莫名其妙好了，也是没脾气)。
+
+不能用 pip 的话，直接上 github 下他们的包，然后执行下面的代码安装也是很方便的。
+
+{% highlight shell %}
+python setup.py build
+python setup.py install
+{% endhighlight %}
+
+但不使用包管理器的话就容易出现依赖问题。PyMc 是对 numpy 有依赖的，而且对版本有要求。
+我的 numpy 版本太老了，所以还要先升级一下 numpy。
+
+这时候问题就来了，我用的是 Mac，系统自带的 Python 2.7。一开始还觉得自带的挺爽的，直到最近
+才发现，系统级的应用会有一个很大的问题，就是权限。我的 numpy 是之前使用 pip 安装的，
+装在了 /System 目录的下面。安装的时候是没问题的，但更新的时候就扑街了，
+普通用户并没有删除的权限，以至于 uninstall 会执行失败。为了获得权限，有些邪道方法，
+不过其实都很麻烦。
+
+最后还是自己用 brew 在 /usr/local/ 下面重新装了一个 Python，再用 pip 跑一遍，终于搞定。
