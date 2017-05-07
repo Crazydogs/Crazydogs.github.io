@@ -123,3 +123,13 @@ python setup.py install
 不过其实都很麻烦。
 
 最后还是自己用 brew 在 /usr/local/ 下面重新装了一个 Python，再用 pip 跑一遍，终于搞定。
+
+另外就是如果要在 Mac 上在 pyplot 绘图中使用中文，可能须要修改一下配置。
+配置文件的位置可以通过下面代码获得
+
+{% highlight python %}
+import matplotlib
+matplotlib.matplotlib\_fname()
+{% endhighlight %}
+
+找到 matplotlibrc 文件，找到 font.family 配置项，修改成系统的中文字体即可。
